@@ -1,10 +1,11 @@
+class_name EnemigoBase
 extends Area2D
 
 const DAMAGE_NUMBER_SCENE = preload("res://DamageNumber.tscn")
 const EXPLOSION_PARTICLES_SCENE = preload("res://ExplosionParticles.tscn")
 
-## Señal emitida al morir el enemigo, enviando el tipo de enemigo de forma fuertemente tipada.
-signal enemigo_muerto(posicion_global: Vector2, tipo_fallecido: Enums.TipoEnemigo)
+## Señal emitida al morir el enemigo, enviando su posición y su valor de recompensa XP.
+signal enemigo_muerto(posicion_global: Vector2, puntos_xp: int)
 
 ## Salud actual del enemigo. Se destruye al llegar a cero.
 @export var vida: float = 20.0
@@ -20,6 +21,9 @@ signal enemigo_muerto(posicion_global: Vector2, tipo_fallecido: Enums.TipoEnemig
 
 ## Tipo de enemigo asignado mediante el Enum global (Aparecerá como lista desplegable en el Inspector)
 @export var tipo_enemigo: Enums.TipoEnemigo = Enums.TipoEnemigo.KAMIKAZE
+
+## Recompensa de experiencia (XP) otorgada al jugador al destruirse (Economía interna polimórfica)
+var xp_al_morir: int = 5
 
 ## Cadencia de disparo para el enemigo de Rango en segundos
 @export var cadencia_disparo_enemigo: float = 1.8
@@ -44,6 +48,7 @@ func configurar_visual_por_tipo() -> void:
 	match tipo_enemigo:
 		Enums.TipoEnemigo.KAMIKAZE:
 			vida = 20.0
+			xp_al_morir = 5
 			visual.points = PackedVector2Array([
 				Vector2(0, -12),
 				Vector2(10, 10),
@@ -57,6 +62,7 @@ func configurar_visual_por_tipo() -> void:
 		Enums.TipoEnemigo.TANQUE:
 			vida = 100.0
 			velocidad = velocidad * 0.5
+			xp_al_morir = 50
 			visual.width = 4.5
 			visual.default_color = Color(0.2, 1.0, 0.2)
 			
@@ -72,6 +78,7 @@ func configurar_visual_por_tipo() -> void:
 		Enums.TipoEnemigo.RANGO:
 			vida = 25.0
 			velocidad = velocidad * 0.8
+			xp_al_morir = 5
 			visual.width = 2.0
 			visual.default_color = Color(0.0, 1.0, 1.0)
 			
@@ -104,7 +111,7 @@ func recibir_dano(cantidad: float) -> void:
 		health_bar.value = vida
 
 	if vida <= 0.0:
-		enemigo_muerto.emit(global_position, tipo_enemigo)
+		enemigo_muerto.emit(global_position, xp_al_morir)
 		
 		var explosion = EXPLOSION_PARTICLES_SCENE.instantiate()
 		explosion.global_position = global_position

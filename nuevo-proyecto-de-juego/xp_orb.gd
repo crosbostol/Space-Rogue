@@ -3,6 +3,9 @@ extends Area2D
 ## Valor de experiencia que otorga el orbe.
 @export var valor_xp: int = 5
 
+## Tipo y rareza visual de la categoría de recompensa del orbe.
+@export var tipo_orbe: Enums.TipoOrb = Enums.TipoOrb.CHICO
+
 ## Distancia máxima en píxeles a la que el orbe es atraído por el Player (como respaldo).
 @export var rango_atraccion: float = 150.0
 
@@ -27,24 +30,26 @@ func _ready() -> void:
 	if player and player is Node2D:
 		objetivo_player = player
 		
-	# Polimorfismo visual elástico y escalado de rareza según el valor de XP
+	# Polimorfismo visual puro desacoplado mediante evaluación de la categoría del Enum global
 	var visual = get_node_or_null("Visual")
 	if visual and visual is Line2D:
-		if valor_xp == 50:
-			# Tanque: Recompensa legendaria masiva
-			scale = Vector2(2.0, 2.0)
-			visual.default_color = Color(1.0, 0.85, 0.0) # Amarillo / Dorado Neón Puro
-			visual.width = 3.0 # Grosor de línea mayor
-		elif valor_xp == 15:
-			# Rango: Recompensa media a juego con la identidad del enemigo
-			scale = Vector2(1.5, 1.5)
-			visual.default_color = Color(0.0, 1.0, 1.0) # Cian Neón
-			visual.width = 2.0
-		else:
-			# Kamikaze / Estándar: Orbe base cian
-			scale = Vector2(1.0, 1.0)
-			visual.default_color = Color(0.0, 0.8, 1.0) # Cian base
-			visual.width = 1.5
+		match tipo_orbe:
+			Enums.TipoOrb.GRANDE:
+				# Recompensa legendaria masiva (Tanque)
+				scale = Vector2(2.0, 2.0)
+				visual.default_color = Color(1.0, 0.85, 0.0) # Amarillo / Dorado Neón Puro
+				visual.width = 3.0
+			Enums.TipoOrb.MEDIANO:
+				# Recompensa especial (Rango)
+				scale = Vector2(1.5, 1.5)
+				visual.default_color = Color(0.0, 1.0, 1.0) # Cian Neón
+				visual.width = 2.0
+			Enums.TipoOrb.CHICO, _:
+				# Recompensa básica (Kamikaze)
+				scale = Vector2(1.0, 1.0)
+				visual.default_color = Color(0.0, 0.8, 1.0) # Cian Base
+				visual.width = 1.5
+
 
 
 func _physics_process(delta: float) -> void:

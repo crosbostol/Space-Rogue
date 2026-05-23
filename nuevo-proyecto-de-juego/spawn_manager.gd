@@ -118,20 +118,17 @@ func _on_timer_spawn_timeout() -> void:
 		if enemies_container:
 			enemies_container.add_child(nuevo_enemigo)
 
-func _on_enemigo_muerto(posicion: Vector2, tipo_fallecido: Enums.TipoEnemigo) -> void:
+func _on_enemigo_muerto(posicion: Vector2, puntos_xp: int) -> void:
 	muertes += 1
 	
-	# Mapeo síncrono de drops de XP por tipo de enemigo
-	var valor_xp: int = 5
-	match tipo_fallecido:
-		Enums.TipoEnemigo.TANQUE:
-			valor_xp = 50
-		Enums.TipoEnemigo.RANGO:
-			valor_xp = 15
-		Enums.TipoEnemigo.KAMIKAZE:
-			valor_xp = 5
-			
-	print("SpawnManager: Enemigo muerto en ", posicion, ". Otorgando ", valor_xp, " XP.")
+	# Mapeo síncrono y elástico de puntos de XP al Enum global de rareza del orbe
+	var tipo_orb_seleccionado: Enums.TipoOrb = Enums.TipoOrb.CHICO
+	if puntos_xp == 50:
+		tipo_orb_seleccionado = Enums.TipoOrb.GRANDE
+	else:
+		tipo_orb_seleccionado = Enums.TipoOrb.CHICO
+		
+	print("SpawnManager: Enemigo muerto en ", posicion, ". Otorgando ", puntos_xp, " XP.")
 	
 	# Actualizar el KillsCounter HUD
 	var kills_counter = get_node_or_null("/root/Main/UI/HUD/KillsCounter")
@@ -143,9 +140,12 @@ func _on_enemigo_muerto(posicion: Vector2, tipo_fallecido: Enums.TipoEnemigo) ->
 	if xp_orb_scene:
 		var nuevo_orbe = xp_orb_scene.instantiate()
 		if nuevo_orbe is Node2D:
-			# Inyectar el valor de experiencia (polimorfismo por tipo)
+			# Inyectar síncronamente los parámetros económicos y visuales
 			if "valor_xp" in nuevo_orbe:
-				nuevo_orbe.valor_xp = valor_xp
+				nuevo_orbe.valor_xp = puntos_xp
+			if "tipo_orbe" in nuevo_orbe:
+				nuevo_orbe.tipo_orbe = tipo_orb_seleccionado
+				
 			nuevo_orbe.global_position = posicion
 			
 			# Inyectar el orbe en el contenedor global de forma diferida para evitar conflictos con el Physics Server

@@ -7,3 +7,11 @@ enum TipoEnemigo {
 	TANQUE,
 	RANGO
 }
+
+## Definición global del tamaño y rareza de los orbes de XP
+enum TipoOrb {
+	CHICO,
+	MEDIANO,
+	GRANDE
+}
+
