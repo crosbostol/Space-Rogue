@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://dpxporb7165aa"]
+
+[ext_resource type="Script" path="res://xp_orb.gd" id="1_xporb"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_circle"]
+radius = 8.0
+
+[node name="XpOrb" type="Area2D"]
+script = ExtResource("1_xporb")
+
+[node name="Visual" type="Line2D" parent="."]
+points = PackedVector2Array(0, -6, 5, 0, 0, 6, -5, 0, 0, -6)
+width = 1.5
+default_color = Color(0.0, 1.0, 1.0, 1.0)
+joint_mode = 2
+begin_cap_mode = 2
+end_cap_mode = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_circle")
