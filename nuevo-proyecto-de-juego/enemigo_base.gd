@@ -3,15 +3,8 @@ extends Area2D
 const DAMAGE_NUMBER_SCENE = preload("res://DamageNumber.tscn")
 const EXPLOSION_PARTICLES_SCENE = preload("res://ExplosionParticles.tscn")
 
-## Definición formal del catálogo de tipos de enemigos (Escalabilidad pura)
-enum TipoEnemigo {
-	KAMIKAZE,
-	TANQUE,
-	RANGO
-}
-
-## Señal emitida al morir el enemigo.
-signal enemigo_muerto(posicion_global: Vector2)
+## Señal emitida al morir el enemigo, enviando el tipo de enemigo de forma fuertemente tipada.
+signal enemigo_muerto(posicion_global: Vector2, tipo_fallecido: Enums.TipoEnemigo)
 
 ## Salud actual del enemigo. Se destruye al llegar a cero.
 @export var vida: float = 20.0
@@ -25,8 +18,8 @@ signal enemigo_muerto(posicion_global: Vector2)
 ## Script que implementa la estrategia de movimiento (debe poseer el método estático `obtener_direccion`).
 @export var comportamiento_trayectoria: Script = null
 
-## Tipo de enemigo asignado mediante el Enum (Aparecerá como lista desplegable en el Inspector)
-@export var tipo_enemigo: TipoEnemigo = TipoEnemigo.KAMIKAZE
+## Tipo de enemigo asignado mediante el Enum global (Aparecerá como lista desplegable en el Inspector)
+@export var tipo_enemigo: Enums.TipoEnemigo = Enums.TipoEnemigo.KAMIKAZE
 
 ## Cadencia de disparo para el enemigo de Rango en segundos
 @export var cadencia_disparo_enemigo: float = 1.8
@@ -49,7 +42,7 @@ func configurar_visual_por_tipo() -> void:
 		return
 		
 	match tipo_enemigo:
-		TipoEnemigo.KAMIKAZE:
+		Enums.TipoEnemigo.KAMIKAZE:
 			vida = 20.0
 			visual.points = PackedVector2Array([
 				Vector2(0, -12),
@@ -61,7 +54,7 @@ func configurar_visual_por_tipo() -> void:
 			visual.default_color = Color(1.0, 0.2, 0.3)
 			visual.width = 2.0
 			
-		TipoEnemigo.TANQUE:
+		Enums.TipoEnemigo.TANQUE:
 			vida = 100.0
 			velocidad = velocidad * 0.5
 			visual.width = 4.5
@@ -76,7 +69,7 @@ func configurar_visual_por_tipo() -> void:
 			vertices.append(vertices[0])
 			visual.points = PackedVector2Array(vertices)
 			
-		TipoEnemigo.RANGO:
+		Enums.TipoEnemigo.RANGO:
 			vida = 25.0
 			velocidad = velocidad * 0.8
 			visual.width = 2.0
@@ -111,7 +104,7 @@ func recibir_dano(cantidad: float) -> void:
 		health_bar.value = vida
 
 	if vida <= 0.0:
-		enemigo_muerto.emit(global_position)
+		enemigo_muerto.emit(global_position, tipo_enemigo)
 		
 		var explosion = EXPLOSION_PARTICLES_SCENE.instantiate()
 		explosion.global_position = global_position
@@ -124,8 +117,8 @@ func recibir_dano(cantidad: float) -> void:
 		if proj_container:
 			proj_container.add_child(explosion)
 			
-		# Hit Stun condicionado mediante evaluación numérica del Enum
-		if tipo_enemigo == TipoEnemigo.TANQUE:
+		# Hit Stun condicionado mediante evaluación numérica del Enum global
+		if tipo_enemigo == Enums.TipoEnemigo.TANQUE:
 			Engine.time_scale = 0.01
 			get_tree().create_timer(0.1, true, false, true).timeout.connect(func():
 				if Engine.time_scale == 0.01:
@@ -144,8 +137,8 @@ func _physics_process(delta: float) -> void:
 		
 		position += direccion * velocidad * delta
 		
-	# Lógica condicional optimizada con Enum entero
-	if tipo_enemigo == TipoEnemigo.RANGO:
+	# Lógica condicional optimizada con Enum entero global
+	if tipo_enemigo == Enums.TipoEnemigo.RANGO:
 		tiempo_ultimo_disparo += delta
 		if tiempo_ultimo_disparo >= cadencia_disparo_enemigo:
 			tiempo_ultimo_disparo = 0.0

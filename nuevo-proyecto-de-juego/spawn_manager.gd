@@ -29,34 +29,34 @@ func obtener_posicion_spawn_aleatoria(posicion_player: Vector2) -> Vector2:
 	var offset: Vector2 = Vector2(cos(angulo), sin(angulo)) * radio
 	return posicion_player + offset
 
-func seleccionar_tipo_por_tiempo(tiempo: float) -> String:
+func seleccionar_tipo_por_tiempo(tiempo: float) -> Enums.TipoEnemigo:
 	var rand: float = randf()
 	
 	if tiempo < 20.0:
 		# Fase 1: Solo Kamikazes para calentamiento (0s - 20s)
-		return "kamikaze"
+		return Enums.TipoEnemigo.KAMIKAZE
 	elif tiempo < 50.0:
 		# Fase 2: Introducir enemigos de Rango (25% probabilidad) (20s - 50s)
 		if rand < 0.75:
-			return "kamikaze"
+			return Enums.TipoEnemigo.KAMIKAZE
 		else:
-			return "rango"
+			return Enums.TipoEnemigo.RANGO
 	elif tiempo < 90.0:
 		# Fase 3: Introducir Tanques pesados (10%) y Rangos (30%) (50s - 90s)
 		if rand < 0.60:
-			return "kamikaze"
+			return Enums.TipoEnemigo.KAMIKAZE
 		elif rand < 0.90:
-			return "rango"
+			return Enums.TipoEnemigo.RANGO
 		else:
-			return "tanque"
+			return Enums.TipoEnemigo.TANQUE
 	else:
 		# Fase 4: Caos Total de final de partida (40% Kamikaze, 40% Rango, 20% Tanque) (90s+)
 		if rand < 0.40:
-			return "kamikaze"
+			return Enums.TipoEnemigo.KAMIKAZE
 		elif rand < 0.80:
-			return "rango"
+			return Enums.TipoEnemigo.RANGO
 		else:
-			return "tanque"
+			return Enums.TipoEnemigo.TANQUE
 
 func _on_timer_spawn_timeout() -> void:
 	# Búsqueda segura del nodo Player en el árbol de escenas
@@ -81,16 +81,11 @@ func _on_timer_spawn_timeout() -> void:
 			tiempo = run_manager.tiempo_transcurrido
 			
 		# Seleccionar el tipo de enemigo según la progresión del tiempo
-		var tipo: String = seleccionar_tipo_por_tiempo(tiempo)
+		var tipo_actual: Enums.TipoEnemigo = seleccionar_tipo_por_tiempo(tiempo)
 		
 		# Inyectar el tipo de enemigo de forma explícita mapeándolo al Enum de la clase (Polimorfismo síncrono)
 		if "tipo_enemigo" in nuevo_enemigo:
-			if tipo == "kamikaze":
-				nuevo_enemigo.tipo_enemigo = nuevo_enemigo.TipoEnemigo.KAMIKAZE
-			elif tipo == "rango":
-				nuevo_enemigo.tipo_enemigo = nuevo_enemigo.TipoEnemigo.RANGO
-			elif tipo == "tanque":
-				nuevo_enemigo.tipo_enemigo = nuevo_enemigo.TipoEnemigo.TANQUE
+			nuevo_enemigo.tipo_enemigo = tipo_actual
 		
 		# Ejecutar la configuración visual inmediatamente después de la asignación numérica
 		if nuevo_enemigo.has_method("configurar_visual_por_tipo"):
@@ -98,10 +93,11 @@ func _on_timer_spawn_timeout() -> void:
 		
 		# PRIORITARIO: Inyectar la estrategia de movimiento inmediatamente tras instanciarse para blindar la física inicial
 		var script_movimiento: Script = null
-		if tipo == "rango":
-			script_movimiento = preload("res://path_rango.gd")
-		else:
-			script_movimiento = preload("res://path_kamikaze.gd")
+		match tipo_actual:
+			Enums.TipoEnemigo.RANGO:
+				script_movimiento = preload("res://path_rango.gd")
+			_:
+				script_movimiento = preload("res://path_kamikaze.gd")
 			
 		if "comportamiento_trayectoria" in nuevo_enemigo:
 			nuevo_enemigo.comportamiento_trayectoria = script_movimiento
@@ -122,9 +118,20 @@ func _on_timer_spawn_timeout() -> void:
 		if enemies_container:
 			enemies_container.add_child(nuevo_enemigo)
 
-func _on_enemigo_muerto(posicion: Vector2, valor_xp: int = 5) -> void:
+func _on_enemigo_muerto(posicion: Vector2, tipo_fallecido: Enums.TipoEnemigo) -> void:
 	muertes += 1
-	print("Enemigo murió en: ", posicion)
+	
+	# Mapeo síncrono de drops de XP por tipo de enemigo
+	var valor_xp: int = 5
+	match tipo_fallecido:
+		Enums.TipoEnemigo.TANQUE:
+			valor_xp = 50
+		Enums.TipoEnemigo.RANGO:
+			valor_xp = 15
+		Enums.TipoEnemigo.KAMIKAZE:
+			valor_xp = 5
+			
+	print("SpawnManager: Enemigo muerto en ", posicion, ". Otorgando ", valor_xp, " XP.")
 	
 	# Actualizar el KillsCounter HUD
 	var kills_counter = get_node_or_null("/root/Main/UI/HUD/KillsCounter")
@@ -141,7 +148,7 @@ func _on_enemigo_muerto(posicion: Vector2, valor_xp: int = 5) -> void:
 				nuevo_orbe.valor_xp = valor_xp
 			nuevo_orbe.global_position = posicion
 			
-			# Inyectar el orbe en el contenedor global de forma diferida para evitar conflictos con el Physics Server (flushing queries)
+			# Inyectar el orbe en el contenedor global de forma diferida para evitar conflictos con el Physics Server
 			var projectiles_container = get_node_or_null("/root/Main/World/ProjectilesContainer")
 			if projectiles_container:
 				projectiles_container.call_deferred("add_child", nuevo_orbe)

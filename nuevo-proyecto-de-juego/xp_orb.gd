@@ -27,10 +27,25 @@ func _ready() -> void:
 	if player and player is Node2D:
 		objetivo_player = player
 		
-	# Polimorfismo visual según el valor de experiencia (rareza)
-	if valor_xp > 5:
-		scale = Vector2(1.5, 1.5)
-		modulate = Color(1.0, 0.85, 0.0) # Amarillo / Dorado brillante para mayor rareza
+	# Polimorfismo visual elástico y escalado de rareza según el valor de XP
+	var visual = get_node_or_null("Visual")
+	if visual and visual is Line2D:
+		if valor_xp == 50:
+			# Tanque: Recompensa legendaria masiva
+			scale = Vector2(2.0, 2.0)
+			visual.default_color = Color(1.0, 0.85, 0.0) # Amarillo / Dorado Neón Puro
+			visual.width = 3.0 # Grosor de línea mayor
+		elif valor_xp == 15:
+			# Rango: Recompensa media a juego con la identidad del enemigo
+			scale = Vector2(1.5, 1.5)
+			visual.default_color = Color(0.0, 1.0, 1.0) # Cian Neón
+			visual.width = 2.0
+		else:
+			# Kamikaze / Estándar: Orbe base cian
+			scale = Vector2(1.0, 1.0)
+			visual.default_color = Color(0.0, 0.8, 1.0) # Cian base
+			visual.width = 1.5
+
 
 func _physics_process(delta: float) -> void:
 	# Búsqueda de seguridad por si el jugador resucita o es inyectado posteriormente
