@@ -4,7 +4,7 @@ extends Area2D
 signal enemigo_muerto(posicion_global: Vector2)
 
 ## Salud actual del enemigo. Se destruye al llegar a cero.
-@export var vida: float = 30.0
+@export var vida: float = 20.0
 
 ## Velocidad de movimiento del enemigo en píxeles por segundo.
 @export var velocidad: float = 320.0

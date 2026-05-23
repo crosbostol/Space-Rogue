@@ -41,8 +41,9 @@ texture_repeat = 2
 [node name="Player" type="CharacterBody2D" parent="World" unique_id=1353015756]
 script = ExtResource("4_player")
 
-[node name="Line2D" type="Line2D" parent="World/Player" unique_id=506048567]
-points = PackedVector2Array(3, 5, 1, 2, 4, 2, 3, 5)
+[node name="Visual" type="Line2D" parent="World/Player" unique_id=506048567]
+width = 3.0
+default_color = Color(1, 0.15, 0.45, 1)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="World/Player" unique_id=1212720008]
 shape = SubResource("CircleShape2D_ig7tw")
@@ -65,9 +66,11 @@ script = ExtResource("5_weapon")
 
 [node name="HUD" type="Control" parent="UI" unique_id=529392299]
 layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="HealthBar" type="ProgressBar" parent="UI/HUD" unique_id=3333333333]
 layout_mode = 0
@@ -92,6 +95,48 @@ offset_top = 100.0
 offset_right = 220.0
 offset_bottom = 127.0
 value = 0.0
+
+[node name="GameOverScreen" type="Control" parent="UI/HUD"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BackgroundDim" type="ColorRect" parent="UI/HUD/GameOverScreen"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.15, 0.05, 0.05, 0.8)
+
+[node name="CenterContainer" type="CenterContainer" parent="UI/HUD/GameOverScreen"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/HUD/GameOverScreen/CenterContainer"]
+layout_mode = 2
+theme_override_constants/separation = 30
+alignment = 1
+
+[node name="GameOverLabel" type="Label" parent="UI/HUD/GameOverScreen/CenterContainer/VBoxContainer"]
+layout_mode = 2
+text = "¡NAVE DESTRUIDA! FIN DE LA RUN"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="RestartButton" type="Button" parent="UI/HUD/GameOverScreen/CenterContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+text = "REINICIAR PARTIDA"
 
 [node name="UpgradeMenu" type="Control" parent="UI" unique_id=84482624]
 visible = false
@@ -143,18 +188,25 @@ theme_override_constants/separation = 30
 [node name="CardButton1" type="Button" parent="UI/UpgradeMenu/MarginContainer/VBoxContainer/CardsContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+focus_neighbor_right = NodePath("../CardButton2")
+focus_mode = 2
 text = "Upgrade 1"
 autowrap_mode = 3
 
 [node name="CardButton2" type="Button" parent="UI/UpgradeMenu/MarginContainer/VBoxContainer/CardsContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+focus_neighbor_left = NodePath("../CardButton1")
+focus_neighbor_right = NodePath("../CardButton3")
+focus_mode = 2
 text = "Upgrade 2"
 autowrap_mode = 3
 
 [node name="CardButton3" type="Button" parent="UI/UpgradeMenu/MarginContainer/VBoxContainer/CardsContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
+focus_neighbor_left = NodePath("../CardButton2")
+focus_mode = 2
 text = "Upgrade 3"
 autowrap_mode = 3
 

@@ -4,7 +4,7 @@ extends Node
 @export var enemigo_escena: PackedScene = preload("res://EnemigoBase.tscn")
 
 ## Intervalo de tiempo en segundos entre cada oleada/generación de enemigos.
-@export var tiempo_spawn: float = 2.0
+@export var tiempo_spawn: float = 1.5
 
 ## Contador interno de bajas/enemigos eliminados.
 var muertes: int = 0
@@ -81,7 +81,7 @@ func _on_enemigo_muerto(posicion: Vector2, valor_xp: int = 5) -> void:
 				nuevo_orbe.valor_xp = valor_xp
 			nuevo_orbe.global_position = posicion
 			
-			# Inyectar el orbe en el contenedor global
+			# Inyectar el orbe en el contenedor global de forma diferida para evitar conflictos con el Physics Server (flushing queries)
 			var projectiles_container = get_node_or_null("/root/Main/World/ProjectilesContainer")
 			if projectiles_container:
-				projectiles_container.add_child(nuevo_orbe)
+				projectiles_container.call_deferred("add_child", nuevo_orbe)

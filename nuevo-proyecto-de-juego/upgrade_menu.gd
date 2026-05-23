@@ -65,7 +65,12 @@ func _on_nivel_subido(nuevo_nivel: int) -> void:
 	# 4. Hacer visible el menú de upgrades
 	visible = true
 	
-	# 5. Logs de validación de pausa y selección de cartas
+	# 5. Forzar foco inicial en CardButton1 para permitir navegación con teclado/mando sin ratón
+	if button1:
+		button1.grab_focus()
+		print("UpgradeMenu: Foco de entrada inyectado exitosamente en CardButton1.")
+	
+	# 6. Logs de validación de pausa y selección de cartas
 	print("UpgradeMenu: ¡Interrupción de Subida de Nivel! Nuevo nivel: ", nuevo_nivel)
 	print("UpgradeMenu: Engine.time_scale modificado a: ", Engine.time_scale, " (Juego pausado formalmente).")
 	print("UpgradeMenu: Cartas seleccionadas aleatoriamente (sin duplicados):")
@@ -116,11 +121,29 @@ func _seleccionar_opcion(indice: int) -> void:
 					health_bar.value = player.vida
 					print("UpgradeMenu: HUD HealthBar actualizado. Max: ", health_bar.max_value, ", Valor: ", health_bar.value)
 			"helice":
+				# Incrementar evolución procedimental de la nave y redibujar
+				player.nivel_evolucion_armas += 1
+				player.actualizar_geometria_nave()
+				
+				# Incrementar hélices en el WeaponSystem
 				var weapon_system = player.get_node_or_null("WeaponSystem")
-				if weapon_system and "disparo_en_cruz" in weapon_system:
-					weapon_system.disparo_en_cruz = true
-					print("UpgradeMenu: ¡Efecto Modo Hélice aplicado! Disparo en cruz activado.")
+				if weapon_system and "cantidad_helices" in weapon_system:
+					weapon_system.cantidad_helices += 1
+					print("UpgradeMenu: ¡Efecto Modo Hélice aplicado! Nuevas hélices: ", weapon_system.cantidad_helices, " (Balas: ", weapon_system.cantidad_helices * 2, ")")
 				else:
-					print("UpgradeMenu: ERROR - No se encontró WeaponSystem o la variable disparo_en_cruz.")
+					print("UpgradeMenu: ERROR - No se encontró WeaponSystem o la variable cantidad_helices.")
 	else:
 		print("UpgradeMenu: ERROR - Nodo Player no encontrado al aplicar mejora.")
+
+## Intercepta inputs globales del mando para forzar clics en botones enfocados (Hito 4.9)
+func _input(event: InputEvent) -> void:
+	if not visible:
+		return
+		
+	if event is InputEventJoypadButton and event.pressed:
+		if event.button_index == JOY_BUTTON_A:
+			var focused_node = get_viewport().gui_get_focus_owner()
+			if focused_node and focused_node is Button:
+				if is_ancestor_of(focused_node):
+					focused_node.pressed.emit()
+					get_viewport().set_input_as_handled()
