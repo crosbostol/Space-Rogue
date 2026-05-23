@@ -1,0 +1,33 @@
+[gd_scene format=3 uid="uid://qqy73qx0wyia"]
+
+[sub_resource type="GDScript" id="GDScript_trs4p"]
+resource_name = "bala"
+script/source = "extends Area2D
+
+@export var velocidad: float = 600.0
+var direccion: Vector2 = Vector2.ZERO # El vector hacia donde viaja
+
+func _physics_process(delta: float) -> void:
+	# Mover la bala en la dirección asignada de forma constante
+	position += direccion * velocidad * delta
+
+# Este evento lo da el nodo \"VisibleOnScreenNotifier2D\"
+func _on_visible_on_screen_notifier_2d_screen_exited() -> void:
+	# Si la bala sale del espacio gris visible, se destruye para liberar RAM
+	queue_free()
+"
+
+[sub_resource type="SegmentShape2D" id="SegmentShape2D_trs4p"]
+
+[node name="Bala" type="Area2D" unique_id=361416094]
+script = SubResource("GDScript_trs4p")
+
+[node name="Line2D" type="Line2D" parent="." unique_id=595897251]
+points = PackedVector2Array(0, -5, 0, 0)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1538902304]
+shape = SubResource("SegmentShape2D_trs4p")
+
+[node name="VisibleOnScreenNotifier2D" type="VisibleOnScreenNotifier2D" parent="." unique_id=680691761]
+
+[connection signal="screen_exited" from="VisibleOnScreenNotifier2D" to="." method="_on_visible_on_screen_notifier_2d_screen_exited"]

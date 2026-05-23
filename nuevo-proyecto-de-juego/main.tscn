@@ -1,0 +1,121 @@
+[gd_scene format=3 uid="uid://cmyxmqdjcmwb3"]
+
+[sub_resource type="GDScript" id="GDScript_7dm0k"]
+resource_name = "player"
+script/source = "extends CharacterBody2D
+
+# Atributos de nuestra clase Player (GDD)
+@export var velocidad: float = 300.0
+@export var vida_max: float = 100.0
+@export var vida: float = 100.0
+
+func _physics_process(_delta: float) -> void:
+	# 1. Capturar el input del jugador en 360° (Teclado WASD o Stick Izquierdo)
+	var direccion: Vector2 = Input.get_vector(\"ui_left\", \"ui_right\", \"ui_up\", \"ui_down\")
+	
+	# 2. Aplicar la velocidad al vector de movimiento integrado de Godot
+	velocity = direccion * velocidad
+	
+	# 3. Función nativa de Godot que mueve la nave manejando colisiones automáticamente
+	move_and_slide()
+"
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_ig7tw"]
+
+[sub_resource type="GDScript" id="GDScript_0xm2m"]
+resource_name = "weapon_system"
+script/source = "extends Node2D
+
+# 1. Cargamos el molde (la escena) de la bala en memoria
+const BALA_ESCENA = preload(\"res://Bala.tscn\")
+
+@export var cadencia_disparo: float = 0.25 # Segundos entre disparos
+var tiempo_ultimo_disparo: float = 0.0
+var angulo_actual: float = 0.0
+
+func _process(delta: float) -> void:
+	# Actualizar el temporizador de la cadencia
+	tiempo_ultimo_disparo += delta
+	
+	# 2. Capturar tu nuevo mapeo del Stick R / Flechas
+	var direccion_apuntado: Vector2 = Input.get_vector(\"weapon_left\", \"weapon_right\", \"weapon_up\", \"weapon_down\")
+	
+	# 3. Si estás apuntando a alguna dirección...
+	if direccion_apuntado.length() > 0.1:
+		angulo_actual = direccion_apuntado.angle()
+		rotation = angulo_actual # Visualmente rota el pivote
+		
+		# ¿Ha pasado suficiente tiempo para el siguiente disparo?
+		if tiempo_ultimo_disparo >= cadencia_disparo:
+			disparar_eje_espejo()
+			tiempo_ultimo_disparo = 0.0 # Resetear cronómetro
+
+func disparar_eje_espejo() -> void:
+	# --- BALA ORIGINAL (Ángulo theta) ---
+	crear_instancia_bala(angulo_actual)
+	
+	# --- BALA ESPEJO (Ángulo theta + PI) ---
+	# En radianes, PI equivale a 180 grados. El opuesto perfecto.
+	crear_instancia_bala(angulo_actual + PI)
+
+func crear_instancia_bala(angulo: float) -> void:
+	# Clonamos la escena de la bala
+	var nueva_bala = BALA_ESCENA.instantiate()
+	
+	# Definimos su vector de dirección usando el coseno y seno del ángulo
+	nueva_bala.direccion = Vector2(cos(angulo), sin(angulo))
+	
+	# Posicionamos la bala justo donde está la nave actualmente
+	nueva_bala.global_position = global_position
+	
+	# ¡SÚPER IMPORTANTE! Inyectamos la bala en el contenedor global del mundo,
+	# no dentro de la nave, para que se mueva de forma independiente en el espacio.
+	var proyectiles_container = get_node(\"/root/Main/World/ProjectilesContainer\")
+	proyectiles_container.add_child(nueva_bala)
+"
+
+[node name="Main" type="Node" unique_id=348898223]
+
+[node name="Managers" type="Node" parent="." unique_id=1679397077]
+
+[node name="GameManager" type="Node" parent="Managers" unique_id=1830324804]
+
+[node name="LootManager" type="Node" parent="Managers" unique_id=799253417]
+
+[node name="RunManager" type="Node" parent="Managers" unique_id=1676676987]
+
+[node name="World" type="Node2D" parent="." unique_id=1953852740]
+
+[node name="Background" type="ParallaxBackground" parent="World" unique_id=2050133358]
+
+[node name="Player" type="CharacterBody2D" parent="World" unique_id=1353015756]
+script = SubResource("GDScript_7dm0k")
+
+[node name="Line2D" type="Line2D" parent="World/Player" unique_id=506048567]
+points = PackedVector2Array(3, 5, 1, 2, 4, 2, 3, 5)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Player" unique_id=1212720008]
+shape = SubResource("CircleShape2D_ig7tw")
+
+[node name="WeaponSystem" type="Node2D" parent="World/Player" unique_id=1981308630]
+script = SubResource("GDScript_0xm2m")
+
+[node name="EnemiesContainer" type="Node2D" parent="World" unique_id=1912032595]
+
+[node name="ProjectilesContainer" type="Node2D" parent="World" unique_id=1227079820]
+
+[node name="UI" type="CanvasLayer" parent="." unique_id=280285575]
+
+[node name="HUD" type="Control" parent="UI" unique_id=529392299]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="UpgradeMenu" type="Control" parent="UI" unique_id=84482624]
+layout_mode = 3
+anchors_preset = 0
+offset_left = 60.0
+offset_top = 59.0
+offset_right = 100.0
+offset_bottom = 99.0
