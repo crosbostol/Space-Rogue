@@ -116,3 +116,32 @@ func _actualizar_hud() -> void:
 	if xp_bar and xp_bar is ProgressBar:
 		xp_bar.max_value = xp_requerida
 		xp_bar.value = xp_actual
+
+## Captura y conmuta la pausa global mediante Escape o el botón Start del mando, con resguardo de seguridad
+func _input(event: InputEvent) -> void:
+	var es_escape: bool = event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE
+	var es_start: bool = event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_START
+	
+	if es_escape or es_start:
+		var upgrade_menu = get_node_or_null("/root/Main/UI/UpgradeMenu")
+		var hud = get_node_or_null("/root/Main/UI/HUD")
+		var game_over_screen = hud.get_node_or_null("GameOverScreen") if hud else null
+		
+		# Evitar pausar si la subida de nivel o la pantalla de GameOver ya están activas en pantalla
+		var upgrade_activo: bool = upgrade_menu.visible if upgrade_menu else false
+		var game_over_activo: bool = game_over_screen.visible if game_over_screen else false
+		
+		if not upgrade_activo and not game_over_activo:
+			var pause_menu = get_node_or_null("/root/Main/UI/PauseMenu")
+			if pause_menu:
+				pause_menu.visible = not pause_menu.visible
+				if pause_menu.visible:
+					Engine.time_scale = 0.0
+					print("RunManager: Pausa global activada. Simulación detenida.")
+				else:
+					Engine.time_scale = 1.0
+					print("RunManager: Pausa global desactivada. Simulación reanudada.")
+				
+				# Consumir formalmente el evento
+				get_viewport().set_input_as_handled()
+

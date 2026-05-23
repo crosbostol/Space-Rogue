@@ -1,5 +1,15 @@
 extends Area2D
 
+const DAMAGE_NUMBER_SCENE = preload("res://DamageNumber.tscn")
+const EXPLOSION_PARTICLES_SCENE = preload("res://ExplosionParticles.tscn")
+
+## Definición formal del catálogo de tipos de enemigos (Escalabilidad pura)
+enum TipoEnemigo {
+	KAMIKAZE,
+	TANQUE,
+	RANGO
+}
+
 ## Señal emitida al morir el enemigo.
 signal enemigo_muerto(posicion_global: Vector2)
 
@@ -15,8 +25,8 @@ signal enemigo_muerto(posicion_global: Vector2)
 ## Script que implementa la estrategia de movimiento (debe poseer el método estático `obtener_direccion`).
 @export var comportamiento_trayectoria: Script = null
 
-## Tipo de enemigo para polimorfismo dinámico ("kamikaze", "tanque", "rango").
-@export var tipo_enemigo: String = "kamikaze"
+## Tipo de enemigo asignado mediante el Enum (Aparecerá como lista desplegable en el Inspector)
+@export var tipo_enemigo: TipoEnemigo = TipoEnemigo.KAMIKAZE
 
 ## Cadencia de disparo para el enemigo de Rango en segundos
 @export var cadencia_disparo_enemigo: float = 1.8
@@ -39,7 +49,7 @@ func configurar_visual_por_tipo() -> void:
 		return
 		
 	match tipo_enemigo:
-		"kamikaze":
+		TipoEnemigo.KAMIKAZE:
 			vida = 20.0
 			visual.points = PackedVector2Array([
 				Vector2(0, -12),
@@ -50,7 +60,8 @@ func configurar_visual_por_tipo() -> void:
 			])
 			visual.default_color = Color(1.0, 0.2, 0.3)
 			visual.width = 2.0
-		"tanque":
+			
+		TipoEnemigo.TANQUE:
 			vida = 100.0
 			velocidad = velocidad * 0.5
 			visual.width = 4.5
@@ -60,11 +71,12 @@ func configurar_visual_por_tipo() -> void:
 			var vertices: Array[Vector2] = []
 			var radio: float = 16.0
 			for i in range(6):
-				var angulo: float = i * (TAU / 6.0) - PI/2.0
+				var angulo: float = i * (TAU / 6.0) - PI / 2.0
 				vertices.append(Vector2(cos(angulo), sin(angulo)) * radio)
 			vertices.append(vertices[0])
 			visual.points = PackedVector2Array(vertices)
-		"rango":
+			
+		TipoEnemigo.RANGO:
 			vida = 25.0
 			velocidad = velocidad * 0.8
 			visual.width = 2.0
@@ -80,25 +92,46 @@ func configurar_visual_por_tipo() -> void:
 			]
 			visual.points = PackedVector2Array(vertices)
 
-
 ## Aplica daño al enemigo restando de su vida. Se auto-destruye si la vida llega a cero.
 func recibir_dano(cantidad: float) -> void:
-	# Seguro de concurrencia para evitar doble muerte en el mismo frame
 	if vida <= 0.0:
 		return
 		
+	var dmg_label = DAMAGE_NUMBER_SCENE.instantiate()
+	dmg_label.dano_mostrar = cantidad
+	dmg_label.global_position = global_position
+	var proyectiles_container = get_node_or_null("/root/Main/World/ProjectilesContainer")
+	if proyectiles_container:
+		proyectiles_container.add_child(dmg_label)
+		
 	vida -= cantidad
 	
-	# Actualizar la barra de salud de depuración
 	var health_bar = get_node_or_null("HealthBarDebug")
 	if health_bar and health_bar is ProgressBar:
 		health_bar.value = vida
 
 	if vida <= 0.0:
-		# Emitir señal de muerte formal para futuras recompensas/loot
 		enemigo_muerto.emit(global_position)
 		
-		# Desactivar colisiones mediante llamadas diferidas seguras para evitar impactos fantasma
+		var explosion = EXPLOSION_PARTICLES_SCENE.instantiate()
+		explosion.global_position = global_position
+		var visual = get_node_or_null("Visual")
+		if visual and visual is Line2D:
+			explosion.color = visual.default_color
+			explosion.modulate = visual.default_color
+			
+		var proj_container = get_node_or_null("/root/Main/World/ProjectilesContainer")
+		if proj_container:
+			proj_container.add_child(explosion)
+			
+		# Hit Stun condicionado mediante evaluación numérica del Enum
+		if tipo_enemigo == TipoEnemigo.TANQUE:
+			Engine.time_scale = 0.01
+			get_tree().create_timer(0.1, true, false, true).timeout.connect(func():
+				if Engine.time_scale == 0.01:
+					Engine.time_scale = 1.0
+			)
+		
 		set_deferred("monitoring", false)
 		set_deferred("monitorable", false)
 		queue_free()
@@ -107,19 +140,17 @@ func _physics_process(delta: float) -> void:
 	if comportamiento_trayectoria:
 		var direccion: Vector2 = Vector2.ZERO
 		if comportamiento_trayectoria.has_method("obtener_direccion"):
-			direccion = comportamiento_trayectoria.obtener_direccion(global_position, self)
+			direccion = comportamiento_trayectoria.obtener_direccion(global_position, self )
 		
-		# Avanzar hacia la dirección calculada por la estrategia de movimiento
 		position += direccion * velocidad * delta
 		
-	# Lógica de ataque a distancia para el enemigo de Rango
-	if tipo_enemigo == "rango":
+	# Lógica condicional optimizada con Enum entero
+	if tipo_enemigo == TipoEnemigo.RANGO:
 		tiempo_ultimo_disparo += delta
 		if tiempo_ultimo_disparo >= cadencia_disparo_enemigo:
 			tiempo_ultimo_disparo = 0.0
 			disparar_al_player()
 
-## Instancia y dispara una bala hacia el jugador con estética Neón Cian
 func disparar_al_player() -> void:
 	var player = get_node_or_null("/root/Main/World/Player")
 	if player and player is Node2D:
@@ -131,12 +162,10 @@ func disparar_al_player() -> void:
 			nueva_bala.es_bala_enemiga = true
 			nueva_bala.dano_impacto = dano_impacto
 			
-			# Pintar la bala enemiga de color cian neón para que el jugador la distinga!
-			var visual_bala = nueva_bala.get_node_or_null("Visual")
+			var visual_bala = nueva_bala.get_node_or_null("Line2D")
 			if visual_bala and visual_bala is Line2D:
-				visual_bala.default_color = Color(0.0, 1.0, 1.0) # Cian Neón
+				visual_bala.default_color = Color(0.0, 1.0, 1.0)
 			
-			# Compensar posición de salida
 			nueva_bala.global_position = global_position + dir * 16.0
 			
 			var proyectiles_container = get_node_or_null("/root/Main/World/ProjectilesContainer")

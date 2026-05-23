@@ -7,7 +7,7 @@
 script = ExtResource("1_bala")
 
 [node name="Line2D" type="Line2D" parent="." unique_id=595897251]
-points = PackedVector2Array(0, -5, 0, 0)
+points = PackedVector2Array(-6, 0, 6, 0)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1538902304]
 shape = SubResource("SegmentShape2D_trs4p")

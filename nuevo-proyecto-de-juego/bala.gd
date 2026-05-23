@@ -10,6 +10,9 @@ var direccion: Vector2 = Vector2.ZERO # El vector hacia donde viaja
 @export var dano_impacto: float = 10.0
 
 func _ready() -> void:
+	# Alinear la rotación del nodo raíz de la bala con su dirección de viaje (0 radianes es X positivo)
+	rotation = direccion.angle()
+	
 	# Conectar la señal de colisión por código
 	area_entered.connect(_on_area_entered)
 

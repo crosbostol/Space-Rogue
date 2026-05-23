@@ -9,6 +9,9 @@ extends CharacterBody2D
 ## Nivel acumulativo de evolución de armas para maquetación procedimental
 var nivel_evolucion_armas: int = 1
 
+## Indica si el jugador es invulnerable (Modo Trucos / DevMode)
+var es_invulnerable: bool = false
+
 func _ready() -> void:
 	# Conectar dinámicamente la señal area_entered de la Hitbox
 	var hitbox = get_node_or_null("Hitbox")
@@ -26,6 +29,20 @@ func _ready() -> void:
 	if restart_button and restart_button is Button:
 		restart_button.pressed.connect(_on_restart_button_pressed)
 		print("Player: Conexión dinámica exitosa a 'pressed' de RestartButton.")
+
+	# Buscar y configurar el Menú de Desarrollador (DevMenu) dinámicamente
+	var dev_menu = get_node_or_null("/root/Main/UI/DevMenu")
+	if dev_menu:
+		var btn_helice = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/CheatHelice")
+		var btn_coraza = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/CheatCoraza")
+		var btn_iman = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/CheatIman")
+		var btn_inv = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/CheatInvulnerabilidad")
+		
+		if btn_helice: btn_helice.pressed.connect(_on_cheat_helice_pressed)
+		if btn_coraza: btn_coraza.pressed.connect(_on_cheat_coraza_pressed)
+		if btn_iman: btn_iman.pressed.connect(_on_cheat_iman_pressed)
+		if btn_inv: btn_inv.pressed.connect(_on_cheat_invulnerabilidad_pressed)
+		print("Player: Conexiones de señales del DevMenu inicializadas síncronamente.")
 
 	# Inicializar la geometría procedimental de la nave
 	actualizar_geometria_nave()
@@ -96,6 +113,10 @@ func actualizar_geometria_nave() -> void:
 
 ## Recibe daño de proyectiles o enemigos.
 func recibir_dano(cantidad: float) -> void:
+	# Freno absoluto de Invulnerabilidad para pruebas de control de calidad
+	if es_invulnerable:
+		return
+		
 	# Evitar procesamiento de daño si ya está destruido
 	if vida <= 0.0:
 		return
@@ -155,6 +176,22 @@ func _on_restart_button_pressed() -> void:
 
 ## Intercepta inputs globales para forzar reinicio con ui_accept (Enter/Space) o Botón A del mando cuando GameOver está activo (Hito 4.12)
 func _input(event: InputEvent) -> void:
+	# Mapeo de Alt + 1 para conmutar el Menú de Desarrollo (DevMenu) con pausa síncrona
+	if event is InputEventKey and event.pressed:
+		if Input.is_key_pressed(KEY_ALT) and event.keycode == KEY_1:
+			var dev_menu = get_node_or_null("/root/Main/UI/DevMenu")
+			if dev_menu:
+				dev_menu.visible = not dev_menu.visible
+				if dev_menu.visible:
+					Engine.time_scale = 0.0
+					print("Player: DevMenu activado. Tiempo congelado.")
+				else:
+					Engine.time_scale = 1.0
+					print("Player: DevMenu desactivado. Tiempo reanudado.")
+				
+				get_viewport().set_input_as_handled()
+				return
+				
 	var game_over_screen = get_node_or_null("/root/Main/UI/HUD/GameOverScreen")
 	if game_over_screen and game_over_screen.visible:
 		var es_boton_a_mando = event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_A
@@ -164,3 +201,44 @@ func _input(event: InputEvent) -> void:
 			
 			# Simular el clic en el botón de reinicio (remueve el nodo y recarga)
 			_on_restart_button_pressed()
+
+## Callback: Incrementa el nivel de la hélice procedimentalmente
+func _on_cheat_helice_pressed() -> void:
+	nivel_evolucion_armas += 1
+	actualizar_geometria_nave()
+	
+	var weapon_system = get_node_or_null("WeaponSystem")
+	if weapon_system and "cantidad_helices" in weapon_system:
+		weapon_system.cantidad_helices += 1
+		print("Cheat Dev: Modo Hélice incrementado. Cantidad: ", weapon_system.cantidad_helices)
+
+## Callback: Incrementa vida máxima en 25 y cura por completo al jugador
+func _on_cheat_coraza_pressed() -> void:
+	vida_max += 25.0
+	vida = vida_max
+	print("Cheat Dev: Modo Coraza aplicado. Vida Máx: ", vida_max)
+	
+	# Sincronizar HUD
+	var health_bar = get_node_or_null("/root/Main/UI/HUD/HealthBar")
+	if health_bar and health_bar is ProgressBar:
+		health_bar.max_value = vida_max
+		health_bar.value = vida
+
+## Callback: Incrementa el rango de atracción del imán en 40px
+func _on_cheat_iman_pressed() -> void:
+	rango_iman_actual += 40.0
+	print("Cheat Dev: Modo Imán aplicado. Rango Imán: ", rango_iman_actual)
+
+## Callback: Alterna la invulnerabilidad total
+func _on_cheat_invulnerabilidad_pressed() -> void:
+	es_invulnerable = not es_invulnerable
+	print("Cheat Dev: Invulnerabilidad conmutada: ", es_invulnerable)
+	
+	var dev_menu = get_node_or_null("/root/Main/UI/DevMenu")
+	if dev_menu:
+		var btn_inv = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/CheatInvulnerabilidad")
+		if btn_inv:
+			if es_invulnerable:
+				btn_inv.text = "Cheat Invulnerabilidad: Activo"
+			else:
+				btn_inv.text = "Cheat Invulnerabilidad: Inactivo"

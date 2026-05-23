@@ -1,11 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://cmyxmqdjcmwb3"]
+[gd_scene format=3 uid="uid://cmyxmqdjcmwb3"]
 
-[ext_resource type="Script" path="res://spawn_manager.gd" id="1_spawn"]
-[ext_resource type="Texture2D" path="res://icon.svg" id="2_icon"]
-[ext_resource type="Script" path="res://run_manager.gd" id="3_run"]
-[ext_resource type="Script" path="res://player.gd" id="4_player"]
-[ext_resource type="Script" path="res://weapon_system.gd" id="5_weapon"]
-[ext_resource type="Script" path="res://upgrade_menu.gd" id="6_upgrade"]
+[ext_resource type="Script" uid="uid://dlu5i4h4ujixd" path="res://spawn_manager.gd" id="1_spawn"]
+[ext_resource type="Texture2D" uid="uid://c1tp7pqe622b5" path="res://icon.svg" id="2_icon"]
+[ext_resource type="Script" uid="uid://cn0euj383bu2p" path="res://run_manager.gd" id="3_run"]
+[ext_resource type="Script" uid="uid://dbhovndnca3v0" path="res://player.gd" id="4_player"]
+[ext_resource type="Script" uid="uid://byrobjisumi54" path="res://weapon_system.gd" id="5_weapon"]
+[ext_resource type="Script" uid="uid://drgs5hwbse3as" path="res://upgrade_menu.gd" id="6_upgrade"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_ig7tw"]
 
@@ -26,17 +26,17 @@ script = ExtResource("1_spawn")
 [node name="World" type="Node2D" parent="." unique_id=1953852740]
 
 [node name="Background" type="Parallax2D" parent="World" unique_id=2050133358]
+scroll_scale = Vector2(0.5, 0.5)
 repeat_size = Vector2(2000, 2000)
 repeat_times = 3
-scroll_scale = Vector2(0.5, 0.5)
 
 [node name="BackgroundSprite" type="Sprite2D" parent="World/Background" unique_id=987654321]
 self_modulate = Color(0.04, 0.04, 0.08, 1)
+texture_repeat = 2
 texture = ExtResource("2_icon")
 centered = false
 region_enabled = true
 region_rect = Rect2(0, 0, 2000, 2000)
-texture_repeat = 2
 
 [node name="Player" type="CharacterBody2D" parent="World" unique_id=1353015756]
 script = ExtResource("4_player")
@@ -50,7 +50,7 @@ shape = SubResource("CircleShape2D_ig7tw")
 
 [node name="Hitbox" type="Area2D" parent="World/Player" unique_id=1111111111]
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Player/Hitbox" unique_id=2222222222]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="World/Player/Hitbox" unique_id=-2072745074]
 shape = SubResource("CircleShape2D_ig7tw")
 
 [node name="WeaponSystem" type="Node2D" parent="World/Player" unique_id=1981308630]
@@ -72,7 +72,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="HealthBar" type="ProgressBar" parent="UI/HUD" unique_id=3333333333]
+[node name="HealthBar" type="ProgressBar" parent="UI/HUD" unique_id=-961633963]
 layout_mode = 0
 offset_left = 20.0
 offset_top = 20.0
@@ -80,7 +80,7 @@ offset_right = 220.0
 offset_bottom = 47.0
 value = 100.0
 
-[node name="KillsCounter" type="Label" parent="UI/HUD" unique_id=4444444444]
+[node name="KillsCounter" type="Label" parent="UI/HUD" unique_id=149477148]
 layout_mode = 0
 offset_left = 20.0
 offset_top = 60.0
@@ -88,15 +88,14 @@ offset_right = 220.0
 offset_bottom = 86.0
 text = "Enemigos Eliminados: 0"
 
-[node name="XpBar" type="ProgressBar" parent="UI/HUD" unique_id=5555555555]
+[node name="XpBar" type="ProgressBar" parent="UI/HUD" unique_id=1260588259]
 layout_mode = 0
 offset_left = 20.0
 offset_top = 100.0
 offset_right = 220.0
 offset_bottom = 127.0
-value = 0.0
 
-[node name="GameOverScreen" type="Control" parent="UI/HUD"]
+[node name="GameOverScreen" type="Control" parent="UI/HUD" unique_id=1766038491]
 visible = false
 layout_mode = 1
 anchors_preset = 15
@@ -105,7 +104,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="BackgroundDim" type="ColorRect" parent="UI/HUD/GameOverScreen"]
+[node name="BackgroundDim" type="ColorRect" parent="UI/HUD/GameOverScreen" unique_id=275419538]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -114,7 +113,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.15, 0.05, 0.05, 0.8)
 
-[node name="CenterContainer" type="CenterContainer" parent="UI/HUD/GameOverScreen"]
+[node name="CenterContainer" type="CenterContainer" parent="UI/HUD/GameOverScreen" unique_id=1961391461]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -122,18 +121,18 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/HUD/GameOverScreen/CenterContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/HUD/GameOverScreen/CenterContainer" unique_id=1161539739]
 layout_mode = 2
 theme_override_constants/separation = 30
 alignment = 1
 
-[node name="GameOverLabel" type="Label" parent="UI/HUD/GameOverScreen/CenterContainer/VBoxContainer"]
+[node name="GameOverLabel" type="Label" parent="UI/HUD/GameOverScreen/CenterContainer/VBoxContainer" unique_id=1468429092]
 layout_mode = 2
 text = "¡NAVE DESTRUIDA! FIN DE LA RUN"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="RestartButton" type="Button" parent="UI/HUD/GameOverScreen/CenterContainer/VBoxContainer"]
+[node name="RestartButton" type="Button" parent="UI/HUD/GameOverScreen/CenterContainer/VBoxContainer" unique_id=2090708706]
 layout_mode = 2
 size_flags_horizontal = 4
 text = "REINICIAR PARTIDA"
@@ -148,7 +147,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("6_upgrade")
 
-[node name="BackgroundDim" type="ColorRect" parent="UI/UpgradeMenu"]
+[node name="BackgroundDim" type="ColorRect" parent="UI/UpgradeMenu" unique_id=1347310909]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -157,7 +156,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.7)
 
-[node name="MarginContainer" type="MarginContainer" parent="UI/UpgradeMenu"]
+[node name="MarginContainer" type="MarginContainer" parent="UI/UpgradeMenu" unique_id=1412756836]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -169,46 +168,132 @@ theme_override_constants/margin_top = 50
 theme_override_constants/margin_right = 50
 theme_override_constants/margin_bottom = 50
 
-[node name="VBoxContainer" type="VBoxContainer" parent="UI/UpgradeMenu/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/UpgradeMenu/MarginContainer" unique_id=1919177891]
 layout_mode = 2
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="Label" type="Label" parent="UI/UpgradeMenu/MarginContainer/VBoxContainer"]
+[node name="Label" type="Label" parent="UI/UpgradeMenu/MarginContainer/VBoxContainer" unique_id=1888868152]
 layout_mode = 2
 text = "¡SISTEMA ACTUALIZADO: SELECCIONA UN MÓDULO!"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="CardsContainer" type="HBoxContainer" parent="UI/UpgradeMenu/MarginContainer/VBoxContainer"]
+[node name="CardsContainer" type="HBoxContainer" parent="UI/UpgradeMenu/MarginContainer/VBoxContainer" unique_id=768598470]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 30
 
-[node name="CardButton1" type="Button" parent="UI/UpgradeMenu/MarginContainer/VBoxContainer/CardsContainer"]
+[node name="CardButton1" type="Button" parent="UI/UpgradeMenu/MarginContainer/VBoxContainer/CardsContainer" unique_id=620444451]
 layout_mode = 2
 size_flags_horizontal = 3
 focus_neighbor_right = NodePath("../CardButton2")
-focus_mode = 2
 text = "Upgrade 1"
 autowrap_mode = 3
 
-[node name="CardButton2" type="Button" parent="UI/UpgradeMenu/MarginContainer/VBoxContainer/CardsContainer"]
+[node name="CardButton2" type="Button" parent="UI/UpgradeMenu/MarginContainer/VBoxContainer/CardsContainer" unique_id=392101482]
 layout_mode = 2
 size_flags_horizontal = 3
 focus_neighbor_left = NodePath("../CardButton1")
 focus_neighbor_right = NodePath("../CardButton3")
-focus_mode = 2
 text = "Upgrade 2"
 autowrap_mode = 3
 
-[node name="CardButton3" type="Button" parent="UI/UpgradeMenu/MarginContainer/VBoxContainer/CardsContainer"]
+[node name="CardButton3" type="Button" parent="UI/UpgradeMenu/MarginContainer/VBoxContainer/CardsContainer" unique_id=1606361881]
 layout_mode = 2
 size_flags_horizontal = 3
 focus_neighbor_left = NodePath("../CardButton2")
-focus_mode = 2
 text = "Upgrade 3"
 autowrap_mode = 3
+
+[node name="PauseMenu" type="Control" parent="UI" unique_id=12121212]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BackgroundDim" type="ColorRect" parent="UI/PauseMenu" unique_id=12121213]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.6)
+
+[node name="CenterContainer" type="CenterContainer" parent="UI/PauseMenu" unique_id=12121214]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="UI/PauseMenu/CenterContainer" unique_id=12121215]
+layout_mode = 2
+text = "PAUSA"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DevMenu" type="Control" parent="UI" unique_id=98989898]
+visible = false
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="UI/DevMenu" unique_id=98989899]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -300.0
+grow_horizontal = 0
+grow_vertical = 2
+
+[node name="MarginContainer" type="MarginContainer" parent="UI/DevMenu/Panel" unique_id=98989900]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/DevMenu/Panel/MarginContainer" unique_id=98989901]
+layout_mode = 2
+theme_override_constants/separation = 15
+alignment = 1
+
+[node name="TitleLabel" type="Label" parent="UI/DevMenu/Panel/MarginContainer/VBoxContainer" unique_id=98989902]
+layout_mode = 2
+text = "MENÚ DE DESARROLLADOR"
+horizontal_alignment = 1
+
+[node name="CheatHelice" type="Button" parent="UI/DevMenu/Panel/MarginContainer/VBoxContainer" unique_id=98989903]
+layout_mode = 2
+text = "Cheat Hélice"
+
+[node name="CheatCoraza" type="Button" parent="UI/DevMenu/Panel/MarginContainer/VBoxContainer" unique_id=98989904]
+layout_mode = 2
+text = "Cheat Coraza"
+
+[node name="CheatIman" type="Button" parent="UI/DevMenu/Panel/MarginContainer/VBoxContainer" unique_id=98989905]
+layout_mode = 2
+text = "Cheat Imán"
+
+[node name="CheatInvulnerabilidad" type="Button" parent="UI/DevMenu/Panel/MarginContainer/VBoxContainer" unique_id=98989906]
+layout_mode = 2
+text = "Cheat Invulnerabilidad: Inactivo"
 
 [connection signal="pressed" from="UI/UpgradeMenu/MarginContainer/VBoxContainer/CardsContainer/CardButton1" to="UI/UpgradeMenu" method="_on_card_button_1_pressed"]
 [connection signal="pressed" from="UI/UpgradeMenu/MarginContainer/VBoxContainer/CardsContainer/CardButton2" to="UI/UpgradeMenu" method="_on_card_button_2_pressed"]

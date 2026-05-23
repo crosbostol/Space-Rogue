@@ -83,18 +83,20 @@ func _on_timer_spawn_timeout() -> void:
 		# Seleccionar el tipo de enemigo según la progresión del tiempo
 		var tipo: String = seleccionar_tipo_por_tiempo(tiempo)
 		
-		# Inyectar el tipo de enemigo de forma explícita antes de agregarlo al árbol (Polimorfismo síncrono)
+		# Inyectar el tipo de enemigo de forma explícita mapeándolo al Enum de la clase (Polimorfismo síncrono)
 		if "tipo_enemigo" in nuevo_enemigo:
-			nuevo_enemigo.tipo_enemigo = tipo
+			if tipo == "kamikaze":
+				nuevo_enemigo.tipo_enemigo = nuevo_enemigo.TipoEnemigo.KAMIKAZE
+			elif tipo == "rango":
+				nuevo_enemigo.tipo_enemigo = nuevo_enemigo.TipoEnemigo.RANGO
+			elif tipo == "tanque":
+				nuevo_enemigo.tipo_enemigo = nuevo_enemigo.TipoEnemigo.TANQUE
 		
-		# Configurar el aspecto visual y estadísticas según el tipo inyectado
+		# Ejecutar la configuración visual inmediatamente después de la asignación numérica
 		if nuevo_enemigo.has_method("configurar_visual_por_tipo"):
 			nuevo_enemigo.configurar_visual_por_tipo()
-			
-		# Posicionar al enemigo
-		nuevo_enemigo.global_position = posicion_spawn
 		
-		# Inyectar la estrategia de movimiento según el tipo de enemigo (Polimorfismo dinámico)
+		# PRIORITARIO: Inyectar la estrategia de movimiento inmediatamente tras instanciarse para blindar la física inicial
 		var script_movimiento: Script = null
 		if tipo == "rango":
 			script_movimiento = preload("res://path_rango.gd")
@@ -103,6 +105,11 @@ func _on_timer_spawn_timeout() -> void:
 			
 		if "comportamiento_trayectoria" in nuevo_enemigo:
 			nuevo_enemigo.comportamiento_trayectoria = script_movimiento
+			
+		# Posicionar al enemigo
+		nuevo_enemigo.global_position = posicion_spawn
+
+
 
 
 		
