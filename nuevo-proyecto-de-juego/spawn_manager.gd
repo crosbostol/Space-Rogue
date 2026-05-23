@@ -4,7 +4,7 @@ extends Node
 @export var enemigo_escena: PackedScene = preload("res://EnemigoBase.tscn")
 
 ## Intervalo de tiempo en segundos entre cada oleada/generación de enemigos.
-@export var tiempo_spawn: float = 1.5
+@export var tiempo_spawn: float = 1.0
 
 ## Contador interno de bajas/enemigos eliminados.
 var muertes: int = 0
@@ -29,6 +29,35 @@ func obtener_posicion_spawn_aleatoria(posicion_player: Vector2) -> Vector2:
 	var offset: Vector2 = Vector2(cos(angulo), sin(angulo)) * radio
 	return posicion_player + offset
 
+func seleccionar_tipo_por_tiempo(tiempo: float) -> String:
+	var rand: float = randf()
+	
+	if tiempo < 20.0:
+		# Fase 1: Solo Kamikazes para calentamiento (0s - 20s)
+		return "kamikaze"
+	elif tiempo < 50.0:
+		# Fase 2: Introducir enemigos de Rango (25% probabilidad) (20s - 50s)
+		if rand < 0.75:
+			return "kamikaze"
+		else:
+			return "rango"
+	elif tiempo < 90.0:
+		# Fase 3: Introducir Tanques pesados (10%) y Rangos (30%) (50s - 90s)
+		if rand < 0.60:
+			return "kamikaze"
+		elif rand < 0.90:
+			return "rango"
+		else:
+			return "tanque"
+	else:
+		# Fase 4: Caos Total de final de partida (40% Kamikaze, 40% Rango, 20% Tanque) (90s+)
+		if rand < 0.40:
+			return "kamikaze"
+		elif rand < 0.80:
+			return "rango"
+		else:
+			return "tanque"
+
 func _on_timer_spawn_timeout() -> void:
 	# Búsqueda segura del nodo Player en el árbol de escenas
 	var player: Node = get_node_or_null("/root/Main/World/Player")
@@ -45,13 +74,37 @@ func _on_timer_spawn_timeout() -> void:
 	# Instanciar el enemigo
 	var nuevo_enemigo = enemigo_escena.instantiate()
 	if nuevo_enemigo is Node2D:
+		# Obtener síncronamente el tiempo transcurrido de la run
+		var run_manager = get_node_or_null("/root/Main/Managers/RunManager")
+		var tiempo: float = 0.0
+		if run_manager and "tiempo_transcurrido" in run_manager:
+			tiempo = run_manager.tiempo_transcurrido
+			
+		# Seleccionar el tipo de enemigo según la progresión del tiempo
+		var tipo: String = seleccionar_tipo_por_tiempo(tiempo)
+		
+		# Inyectar el tipo de enemigo de forma explícita antes de agregarlo al árbol (Polimorfismo síncrono)
+		if "tipo_enemigo" in nuevo_enemigo:
+			nuevo_enemigo.tipo_enemigo = tipo
+		
+		# Configurar el aspecto visual y estadísticas según el tipo inyectado
+		if nuevo_enemigo.has_method("configurar_visual_por_tipo"):
+			nuevo_enemigo.configurar_visual_por_tipo()
+			
 		# Posicionar al enemigo
 		nuevo_enemigo.global_position = posicion_spawn
 		
-		# Inyectar la estrategia Kamikaze asignando el script path_kamikaze.gd
-		var script_kamikaze: Script = preload("res://path_kamikaze.gd")
+		# Inyectar la estrategia de movimiento según el tipo de enemigo (Polimorfismo dinámico)
+		var script_movimiento: Script = null
+		if tipo == "rango":
+			script_movimiento = preload("res://path_rango.gd")
+		else:
+			script_movimiento = preload("res://path_kamikaze.gd")
+			
 		if "comportamiento_trayectoria" in nuevo_enemigo:
-			nuevo_enemigo.comportamiento_trayectoria = script_kamikaze
+			nuevo_enemigo.comportamiento_trayectoria = script_movimiento
+
+
 		
 		# Conectar la señal de muerte formal para gestionar loot/XP e interfaz
 		if nuevo_enemigo.has_signal("enemigo_muerto"):
