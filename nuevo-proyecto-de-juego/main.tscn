@@ -7,12 +7,13 @@
 [ext_resource type="Script" uid="uid://drgs5hwbse3as" path="res://upgrade_menu.gd" id="6_upgrade"]
 [ext_resource type="Script" uid="uid://b4mnct63l787d" path="res://fondo_estelar.gd" id="7_stellar"]
 [ext_resource type="Script" uid="uid://bidl0evhwe6ti" path="res://camera_shake.gd" id="8_shake"]
+[ext_resource type="Script" path="res://grietas_cabina.gd" id="9_cracks"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_ig7tw"]
 
 [sub_resource type="Gradient" id="Gradient_vignette"]
-offsets = PackedFloat32Array(0.8, 1.0)
-colors = PackedColorArray(1, 0, 0, 0, 1, 0, 0, 0.6)
+offsets = PackedFloat32Array(0.96, 1.0)
+colors = PackedColorArray(1, 0, 0, 0, 1, 0, 0, 0.25)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_vignette"]
 gradient = SubResource("Gradient_vignette")
@@ -112,6 +113,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="GrietasCabina" type="Node2D" parent="UI/HUD" unique_id=987123987]
+script = ExtResource("9_cracks")
 
 [node name="VignetteDano" type="TextureRect" parent="UI/HUD" unique_id=123456789]
 modulate = Color(1, 1, 1, 0)

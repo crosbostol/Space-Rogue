@@ -18,6 +18,12 @@ var es_invulnerable_temporal: bool = false
 ## Determina si el efecto de borde rojo por daño (Vignette) está habilitado en los ajustes
 var usar_vignette_dano: bool = true
 
+## Temporizador para bloquear la respiración de la viñeta tras un impacto y permitir que el flash decaiga
+var tiempo_bloqueo_respiracion: float = 0.0
+
+## Array de umbrales cruzados para generación procedimental de grietas de cabina: [0.75, 0.50, 0.25]
+var umbrales_cruzados: Array[bool] = [false, false, false]
+
 func _ready() -> void:
 	# Conectar dinámicamente la señal area_entered de la Hitbox
 	var hitbox = get_node_or_null("Hitbox")
@@ -83,6 +89,34 @@ func _physics_process(_delta: float) -> void:
 		visual.scale.x = lerp(visual.scale.x, objetivo_escala_x, 10.0 * _delta)
 		visual.scale.y = lerp(visual.scale.y, objetivo_escala_y, 10.0 * _delta)
 
+func _process(delta: float) -> void:
+	if tiempo_bloqueo_respiracion > 0.0:
+		tiempo_bloqueo_respiracion -= delta
+		
+	var vignette = get_node_or_null("/root/Main/UI/HUD/VignetteDano")
+	if vignette and vignette.visible:
+		if not usar_vignette_dano:
+			vignette.modulate.a = 0.0
+			return
+			
+		var porcentaje_salud: float = clamp(vida / vida_max, 0.0, 1.0)
+		
+		if porcentaje_salud > 0.7:
+			if tiempo_bloqueo_respiracion <= 0.0:
+				vignette.modulate.a = 0.0
+		else:
+			if tiempo_bloqueo_respiracion <= 0.0:
+				# A menor vida, más rápido respira el sistema (frecuencia)
+				var factor_tension: float = 1.0 - porcentaje_salud
+				var frecuencia: float = lerp(2.0, 8.0, factor_tension)
+				
+				# La opacidad base oscila suavemente usando una función seno
+				var oscilacion: float = (sin(Time.get_ticks_msec() * 0.001 * frecuencia) + 1.0) / 2.0
+				
+				# Establecer un techo de opacidad sutil (máximo 0.35 en peligro crítico)
+				var opacidad_maxima: float = lerp(0.05, 0.35, factor_tension)
+				vignette.modulate.a = oscilacion * opacidad_maxima
+
 ## Genera procedimentalmente la forma geométrica de la nave en base al nivel de evolución de armas
 func actualizar_geometria_nave() -> void:
 	var visual = get_node_or_null("Visual")
@@ -138,6 +172,13 @@ func recibir_dano(cantidad: float) -> void:
 	# Animación y recalculo de Tensión Dinámica del Red Splash / Vignette
 	actualizar_vignette_dano_por_salud(true)
 	
+	# Disparar impacto dinámico y acumulativo en el parabrisas
+	var selector_grietas = get_node_or_null("/root/Main/UI/HUD/GrietasCabina")
+	if selector_grietas and selector_grietas.has_method("registrar_impacto_vidrio"):
+		var porcentaje_salud: float = clamp(vida / vida_max, 0.0, 1.0)
+		var factor_dano: float = cantidad / vida_max
+		selector_grietas.registrar_impacto_vidrio(factor_dano, porcentaje_salud)
+	
 	# Actualizar el ProgressBar del HUD
 	var health_bar = get_node_or_null("/root/Main/UI/HUD/HealthBar")
 	if health_bar and health_bar is ProgressBar:
@@ -175,6 +216,13 @@ func hacer_invulnerable_temporal(duracion: float) -> void:
 			print("Player: Invulnerabilidad temporal finalizada.")
 		)
 
+## Restablece los umbrales de fractura de cabina y limpia las grietas visuales (autoreparación de nanobots)
+func reparar_cabina_completa() -> void:
+	umbrales_cruzados = [false, false, false]
+	var grietas = get_node_or_null("/root/Main/UI/HUD/GrietasCabina")
+	if grietas and grietas.has_method("limpiar_grietas"):
+		grietas.limpiar_grietas()
+
 ## Recalcula el offset y la opacidad de la viñeta de daño en base a la salud actual del jugador (Tensión Dinámica)
 func actualizar_vignette_dano_por_salud(es_impacto: bool = false) -> void:
 	if not usar_vignette_dano:
@@ -185,28 +233,30 @@ func actualizar_vignette_dano_por_salud(es_impacto: bool = false) -> void:
 		var g_texture = vignette.texture as GradientTexture2D
 		var gradient = g_texture.gradient
 		if gradient:
+			# Forzar los offsets y colores fijos para mantener el centro limpio (96% de la pantalla)
+			gradient.offsets = PackedFloat32Array([0.96, 1.0])
+			gradient.colors = PackedColorArray([Color(1, 0, 0, 0), Color(1, 0, 0, 0.25)])
+			
 			# 1. Calcular el porcentaje de salud actual (rango 0.0 a 1.0)
 			var porcentaje_salud: float = clamp(vida / vida_max, 0.0, 1.0)
-			var factor_tension: float = 1.0 - porcentaje_salud # 0.0 a tope de vida, 1.0 al borde de morir
+			var factor_tension: float = 1.0 - porcentaje_salud
 			
-			# 2. Modificar el offset del gradiente de forma inversamente proporcional:
-			# A tope de vida, el offset inicial es 0.95 (borde ultra sutil).
-			# Cerca de morir, el offset baja a 0.65, haciendo que el rojo muerda agresivamente hacia el centro.
-			var nuevo_offset_inicio: float = lerp(0.95, 0.65, factor_tension)
-			gradient.set_offset(0, nuevo_offset_inicio)
-			
-			# 3. Disparar un latido (Flash) elástico usando Tweens:
-			var opacidad_objetivo_tension: float = lerp(0.0, 0.4, factor_tension)
-			
+			var opacidad_base: float = 0.0
+			if porcentaje_salud <= 0.7:
+				opacidad_base = lerp(0.05, 0.35, factor_tension)
+				
 			if es_impacto:
-				var opacidad_impacto: float = clamp(opacidad_objetivo_tension + 0.4, 0.3, 0.8)
+				# Pico de opacidad instantáneo
+				vignette.modulate.a = 0.5
+				tiempo_bloqueo_respiracion = 0.2
+				
+				# Decaimiento suave usando Tween
 				var tween = create_tween()
-				vignette.modulate.a = opacidad_impacto # Pico del flash en el frame del golpe
-				tween.tween_property(vignette, "modulate:a", opacidad_objetivo_tension, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+				tween.tween_property(vignette, "modulate:a", opacidad_base, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 			else:
-				# Actualización suave sin pico de impacto (para curación o carga inicial)
+				# Actualización suave sin impacto (para curación o carga inicial)
 				var tween = create_tween()
-				tween.tween_property(vignette, "modulate:a", opacidad_objetivo_tension, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+				tween.tween_property(vignette, "modulate:a", opacidad_base, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 ## Recibe experiencia de los orbes recolectados.
 func recibir_xp(cantidad: int) -> void:
@@ -287,8 +337,9 @@ func _on_cheat_coraza_pressed() -> void:
 		health_bar.max_value = vida_max
 		health_bar.value = vida
 		
-	# Sincronizar y limpiar la viñeta de tensión
+	# Sincronizar y limpiar la viñeta de tensión y las grietas de cabina
 	actualizar_vignette_dano_por_salud(false)
+	reparar_cabina_completa()
 
 ## Callback: Incrementa el rango de atracción del imán en 40px
 func _on_cheat_iman_pressed() -> void:
