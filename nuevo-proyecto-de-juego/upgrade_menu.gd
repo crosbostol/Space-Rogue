@@ -105,6 +105,10 @@ func _seleccionar_opcion(indice: int) -> void:
 	# Bloque condicional para inyectar los efectos físicos reales (Hito 4.4)
 	var player: CharacterBody2D = get_node_or_null("/root/Main/World/Player")
 	if player:
+		# Conceder 0.5 segundos de invulnerabilidad para permitir que el jugador vuelva a acomodar sus manos/dedos
+		if player.has_method("hacer_invulnerable_temporal"):
+			player.hacer_invulnerable_temporal(0.5)
+			
 		match seleccion["id"]:
 			"iman":
 				player.rango_iman_actual += 40.0

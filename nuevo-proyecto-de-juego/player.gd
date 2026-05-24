@@ -12,6 +12,9 @@ var nivel_evolucion_armas: int = 1
 ## Indica si el jugador es invulnerable (Modo Trucos / DevMode)
 var es_invulnerable: bool = false
 
+## Indica si el jugador es invulnerable de forma temporal tras elegir una mejora
+var es_invulnerable_temporal: bool = false
+
 func _ready() -> void:
 	# Conectar dinámicamente la señal area_entered de la Hitbox
 	var hitbox = get_node_or_null("Hitbox")
@@ -113,8 +116,8 @@ func actualizar_geometria_nave() -> void:
 
 ## Recibe daño de proyectiles o enemigos.
 func recibir_dano(cantidad: float) -> void:
-	# Freno absoluto de Invulnerabilidad para pruebas de control de calidad
-	if es_invulnerable:
+	# Freno absoluto de Invulnerabilidad para pruebas de control de calidad o temporal por menú
+	if es_invulnerable or es_invulnerable_temporal:
 		return
 		
 	# Evitar procesamiento de daño si ya está destruido
@@ -144,6 +147,21 @@ func recibir_dano(cantidad: float) -> void:
 			if restart_btn and restart_btn is Button:
 				restart_btn.grab_focus()
 				print("Player: Foco de entrada inyectado en el botón de reinicio.")
+
+## Activa un tiempo de invulnerabilidad temporal en segundos con feedback visual (transparencia fantasma)
+func hacer_invulnerable_temporal(duracion: float) -> void:
+	es_invulnerable_temporal = true
+	
+	var visual = get_node_or_null("Visual")
+	if visual:
+		visual.modulate.a = 0.4
+		
+	get_tree().create_timer(duracion, true, false, true).timeout.connect(func():
+		es_invulnerable_temporal = false
+		if visual:
+			visual.modulate.a = 1.0
+		print("Player: Invulnerabilidad temporal finalizada.")
+	)
 
 ## Recibe experiencia de los orbes recolectados.
 func recibir_xp(cantidad: int) -> void:

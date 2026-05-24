@@ -140,9 +140,13 @@ func _physics_process(delta: float) -> void:
 	if comportamiento_trayectoria:
 		var direccion: Vector2 = Vector2.ZERO
 		if comportamiento_trayectoria.has_method("obtener_direccion"):
-			direccion = comportamiento_trayectoria.obtener_direccion(global_position, self )
+			direccion = comportamiento_trayectoria.obtener_direccion(global_position, self)
 		
 		position += direccion * velocidad * delta
+		
+		# Si es de tipo KAMIKAZE, orientar su vértice principal (punta de flecha en Vector2(0, -12)) hacia el Player
+		if tipo_enemigo == Enums.TipoEnemigo.KAMIKAZE and direccion != Vector2.ZERO:
+			global_rotation = direccion.angle() + PI / 2.0
 		
 	# Lógica condicional optimizada con Enum entero global
 	if tipo_enemigo == Enums.TipoEnemigo.RANGO:

@@ -6,6 +6,7 @@
 [ext_resource type="Script" uid="uid://dbhovndnca3v0" path="res://player.gd" id="4_player"]
 [ext_resource type="Script" uid="uid://byrobjisumi54" path="res://weapon_system.gd" id="5_weapon"]
 [ext_resource type="Script" uid="uid://drgs5hwbse3as" path="res://upgrade_menu.gd" id="6_upgrade"]
+[ext_resource type="Script" path="res://fondo_estelar.gd" id="7_stellar"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_ig7tw"]
 
@@ -25,18 +26,50 @@ script = ExtResource("1_spawn")
 
 [node name="World" type="Node2D" parent="." unique_id=1953852740]
 
-[node name="Background" type="Parallax2D" parent="World" unique_id=2050133358]
-scroll_scale = Vector2(0.5, 0.5)
-repeat_size = Vector2(2000, 2000)
+[node name="Background" type="Node2D" parent="World" unique_id=2050133358]
+
+[node name="FondoOscuro" type="ColorRect" parent="World/Background"]
+offset_left = -50000.0
+offset_top = -50000.0
+offset_right = 50000.0
+offset_bottom = 50000.0
+color = Color(0.02, 0.02, 0.04, 1)
+
+[node name="CapaLejana" type="Parallax2D" parent="World/Background"]
+scroll_scale = Vector2(0.1, 0.1)
+repeat_size = Vector2(1920, 1080)
 repeat_times = 3
 
-[node name="BackgroundSprite" type="Sprite2D" parent="World/Background" unique_id=987654321]
-self_modulate = Color(0.04, 0.04, 0.08, 1)
-texture_repeat = 2
-texture = ExtResource("2_icon")
-centered = false
-region_enabled = true
-region_rect = Rect2(0, 0, 2000, 2000)
+[node name="FondoEstelarLejana" type="Node2D" parent="World/Background/CapaLejana"]
+script = ExtResource("7_stellar")
+cantidad_estrellas = 150
+tamano_max_estrella = 1.0
+color_base = Color(0.7, 0.9, 1.0, 1.0)
+velocidad_parpadeo = 1.2
+
+[node name="CapaMedia" type="Parallax2D" parent="World/Background"]
+scroll_scale = Vector2(0.3, 0.3)
+repeat_size = Vector2(1920, 1080)
+repeat_times = 3
+
+[node name="FondoEstelarMedia" type="Node2D" parent="World/Background/CapaMedia"]
+script = ExtResource("7_stellar")
+cantidad_estrellas = 80
+tamano_max_estrella = 1.5
+color_base = Color(1.0, 1.0, 1.0, 1.0)
+velocidad_parpadeo = 2.0
+
+[node name="CapaCercana" type="Parallax2D" parent="World/Background"]
+scroll_scale = Vector2(0.6, 0.6)
+repeat_size = Vector2(1920, 1080)
+repeat_times = 3
+
+[node name="FondoEstelarCercana" type="Node2D" parent="World/Background/CapaCercana"]
+script = ExtResource("7_stellar")
+cantidad_estrellas = 40
+tamano_max_estrella = 2.0
+color_base = Color(0.0, 1.0, 1.0, 1.0)
+velocidad_parpadeo = 3.5
 
 [node name="Player" type="CharacterBody2D" parent="World" unique_id=1353015756]
 script = ExtResource("4_player")
