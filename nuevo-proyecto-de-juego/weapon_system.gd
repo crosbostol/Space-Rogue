@@ -10,6 +10,9 @@ var angulo_actual: float = 0.0
 ## Cantidad acumulativa de hélices de disparo (Evolución infinita para pruebas de estrés)
 var cantidad_helices: int = 1
 
+## Tipo de munición activa (Hito 8.1)
+@export var tipo_bala_actual: Enums.TipoBala = Enums.TipoBala.ESTANDAR
+
 func _process(delta: float) -> void:
 	# Actualizar el temporizador de la cadencia
 	tiempo_ultimo_disparo += delta
@@ -45,6 +48,7 @@ func disparar_eje_espejo() -> void:
 func crear_instancia_bala(angulo: float) -> void:
 	# Clonamos la escena de la bala
 	var nueva_bala = BALA_ESCENA.instantiate()
+	nueva_bala.tipo_bala = tipo_bala_actual
 	
 	# Definimos su vector de dirección usando el coseno y seno del ángulo
 	nueva_bala.direccion = Vector2(cos(angulo), sin(angulo))

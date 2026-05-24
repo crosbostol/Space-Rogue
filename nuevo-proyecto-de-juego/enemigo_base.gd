@@ -29,6 +29,10 @@ var xp_al_morir: int = 5
 @export var cadencia_disparo_enemigo: float = 1.8
 var tiempo_ultimo_disparo: float = 0.0
 
+## Control de retroalimentación visual (Hit Flash) para evitar sobreescritura de color en impactos continuos
+var esta_en_hit_flash: bool = false
+var color_original_guardado: Color = Color.WHITE
+
 func _ready() -> void:
 	# Configurar el aspecto visual y estadísticas según el tipo de enemigo
 	configurar_visual_por_tipo()
@@ -100,11 +104,18 @@ func recibir_dano(cantidad: float) -> void:
 	# 1. Feedback visual: Hit Flash (glow de sobreexposición blanca a Color(5, 5, 5))
 	var visual = get_node_or_null("Visual")
 	if visual:
-		var original_modulate = visual.modulate
+		if not esta_en_hit_flash:
+			color_original_guardado = visual.modulate
+			esta_en_hit_flash = true
+		
 		visual.modulate = Color(5.0, 5.0, 5.0)
-		# Usar Tween para restaurar modulate de forma segura (se limpia automáticamente si el enemigo muere)
-		var flash_tween = create_tween()
-		flash_tween.tween_property(visual, "modulate", original_modulate, 0.0).set_delay(0.05)
+		
+		get_tree().create_timer(0.05, true, false, true).timeout.connect(
+			func():
+				if is_instance_valid(visual):
+					visual.modulate = color_original_guardado
+					esta_en_hit_flash = false
+		)
 		
 	# 2. Inyectar trauma leve a la cámara tras el impacto
 	var camera = get_node_or_null("/root/Main/World/Player/Camera2D")

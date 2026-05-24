@@ -3,6 +3,17 @@ extends Node2D
 # Array fuertemente tipado de líneas de fractura vectoriales
 var lineas_fractura: Array[PackedVector2Array] = []
 
+func _ready() -> void:
+	var mat = ShaderMaterial.new()
+	mat.shader = load("res://parabrisas_roto.gdshader")
+	material = mat
+
+func _process(_delta: float) -> void:
+	# Seguir la posición de la cámara para que el parabrisas se mueva con ella y quede fijo en la pantalla
+	var camera = get_viewport().get_camera_2d()
+	if camera:
+		global_position = camera.get_screen_center_position() - get_viewport_rect().size / 2.0
+
 ## Genera procedimentalmente una nueva estructura de grieta desde los bordes hacia el centro (adaptativo a la resolución de pantalla)
 func registrar_impacto_vidrio(factor_dano: float, porcentaje_salud: float) -> void:
 	# Obtener dinámicamente la resolución actual del Viewport para respuesta responsiva
@@ -14,30 +25,32 @@ func registrar_impacto_vidrio(factor_dano: float, porcentaje_salud: float) -> vo
 	
 	# Calcular la agonía del jugador (a menor salud, más largo es el quiebre hacia el centro)
 	var factor_agonica: float = 1.0 - porcentaje_salud
-	var multiplicador_largo: float = lerp(1.0, 4.5, factor_agonica)
+	var multiplicador_largo: float = lerp(1.0, 3.5, factor_agonica)
 	
 	# Escalar la agresividad y longitud del agrietamiento proporcionalmente al factor_dano
 	var mult_escala: float = clamp(factor_dano * 10.0, 0.4, 3.0)
 	
-	# Generar de 2 a 4 ramificaciones (escalado sutilmente por el daño)
-	var base_ramas: int = randi_range(2, 4)
-	var num_ramas: int = clamp(int(base_ramas * clamp(mult_escala, 0.5, 1.5)), 1, 6)
+	# Generar un rango estricto de 2 a 3 líneas principales por impacto (limpio y inorgánico)
+	var num_ramas: int = randi_range(2, 3)
 	
 	for r in range(num_ramas):
 		var puntos_rama: Array[Vector2] = [punto_inicio]
 		var punto_actual: Vector2 = punto_inicio
 		
-		# Ángulo principal de la rama con una desviación aleatoria
-		var dir_rama: Vector2 = dir_hacia_centro.rotated(randf_range(-PI / 6.0, PI / 6.0))
+		# Trayectoria base apuntando hacia la zona general del centro
+		var dir_rama: Vector2 = dir_hacia_centro.rotated(randf_range(-PI / 12.0, PI / 12.0))
 		
-		# Cada rama posee de 2 a 4 segmentos continuos
-		var num_segmentos: int = randi_range(2, 4)
+		# Cada línea principal tendrá un máximo estricto de 3 segmentos continuos (zigzag rígido inorgánico)
+		var num_segmentos: int = 3
 		for s in range(num_segmentos):
-			# La longitud escala con el viewport, el daño del impacto, y la agonía acumulada
-			var longitud: float = randf_range(tamano_pantalla.y * 0.03, tamano_pantalla.y * 0.06) * mult_escala * multiplicador_largo
+			# La longitud base del tramo escala con el viewport, el daño y la agonía acumulada
+			var longitud: float = randf_range(tamano_pantalla.y * 0.02, tamano_pantalla.y * 0.04) * mult_escala * multiplicador_largo
 			
-			# Desviación sutil en cada tramo para simular astillado fractal orgánico
-			var dir_segmento: Vector2 = dir_rama.rotated(randf_range(-PI / 12.0, PI / 12.0))
+			# Desviaciones bruscas tipo zigzag (usa solo ángulos secos aleatorios de entre 30 y 45 grados)
+			var signo: float = 1.0 if randf() < 0.5 else -1.0
+			var desvio_angulo: float = signo * randf_range(deg_to_rad(30.0), deg_to_rad(45.0))
+			var dir_segmento: Vector2 = dir_rama.rotated(desvio_angulo)
+			
 			punto_actual = punto_actual + dir_segmento * longitud
 			puntos_rama.append(punto_actual)
 			
@@ -54,12 +67,14 @@ func limpiar_grietas() -> void:
 	lineas_fractura.clear()
 	queue_redraw()
 
-## Dibuja vectorialmente cada grieta en pantalla con opacidad sutil translúcida
+## Dibuja vectorialmente cada grieta en pantalla utilizando mapa de refracción para el shader
 func _draw() -> void:
-	var color_cristal: Color = Color(0.8, 0.9, 1.0, 0.35) # Blanco/cian translúcido sutil para visibilidad del gameplay
+	# Recorrer las grietas almacenadas
 	for rama in lineas_fractura:
 		if rama.size() > 1:
-			draw_polyline(rama, color_cristal, 1.25, true)
+			# R y G controlan la dirección de la refracción en la GPU, B controla el brillo neón del cristal (1.0), A le da la presencia visual necesaria (0.4)
+			var color_deformacion_brillante = Color(0.75, 0.25, 1.0, 0.4)
+			draw_polyline(rama, color_deformacion_brillante, 1.5, true)
 
 ## Calcula un punto de inicio pseudoaleatorio sobre los bordes dinámicos de la pantalla
 func _obtener_punto_borde(limites: Vector2) -> Vector2:

@@ -7,19 +7,19 @@
 [ext_resource type="Script" uid="uid://drgs5hwbse3as" path="res://upgrade_menu.gd" id="6_upgrade"]
 [ext_resource type="Script" uid="uid://b4mnct63l787d" path="res://fondo_estelar.gd" id="7_stellar"]
 [ext_resource type="Script" uid="uid://bidl0evhwe6ti" path="res://camera_shake.gd" id="8_shake"]
-[ext_resource type="Script" path="res://grietas_cabina.gd" id="9_cracks"]
+[ext_resource type="Script" uid="uid://moho6nsk8y66" path="res://grietas_cabina.gd" id="9_cracks"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_ig7tw"]
 
 [sub_resource type="Gradient" id="Gradient_vignette"]
-offsets = PackedFloat32Array(0.96, 1.0)
+offsets = PackedFloat32Array(0.96, 1)
 colors = PackedColorArray(1, 0, 0, 0, 1, 0, 0, 0.25)
 
 [sub_resource type="GradientTexture2D" id="GradientTexture2D_vignette"]
 gradient = SubResource("Gradient_vignette")
 fill = 1
 fill_from = Vector2(0.5, 0.5)
-fill_to = Vector2(0.5, 0.0)
+fill_to = Vector2(0.5, 0)
 
 [node name="Main" type="Node" unique_id=348898223]
 
@@ -104,6 +104,9 @@ script = ExtResource("8_shake")
 
 [node name="ProjectilesContainer" type="Node2D" parent="World" unique_id=1227079820]
 
+[node name="GrietasCabina" type="Node2D" parent="World" unique_id=987123987]
+script = ExtResource("9_cracks")
+
 [node name="UI" type="CanvasLayer" parent="." unique_id=280285575]
 
 [node name="HUD" type="Control" parent="UI" unique_id=529392299]
@@ -113,9 +116,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-
-[node name="GrietasCabina" type="Node2D" parent="UI/HUD" unique_id=987123987]
-script = ExtResource("9_cracks")
 
 [node name="VignetteDano" type="TextureRect" parent="UI/HUD" unique_id=123456789]
 modulate = Color(1, 1, 1, 0)
@@ -355,6 +355,14 @@ text = "Cheat Invulnerabilidad: Inactivo"
 [node name="ToggleVignette" type="Button" parent="UI/DevMenu/Panel/MarginContainer/VBoxContainer" unique_id=98989907]
 layout_mode = 2
 text = "Efecto Daño Rojo: Activo"
+
+[node name="CheatBalaPerforante" type="Button" parent="UI/DevMenu/Panel/MarginContainer/VBoxContainer" unique_id=98989908]
+layout_mode = 2
+text = "Activar Bala Perforante"
+
+[node name="CheatBalaExpansiva" type="Button" parent="UI/DevMenu/Panel/MarginContainer/VBoxContainer" unique_id=98989909]
+layout_mode = 2
+text = "Activar Bala Expansiva"
 
 [connection signal="pressed" from="UI/UpgradeMenu/MarginContainer/VBoxContainer/CardsContainer/CardButton1" to="UI/UpgradeMenu" method="_on_card_button_1_pressed"]
 [connection signal="pressed" from="UI/UpgradeMenu/MarginContainer/VBoxContainer/CardsContainer/CardButton2" to="UI/UpgradeMenu" method="_on_card_button_2_pressed"]

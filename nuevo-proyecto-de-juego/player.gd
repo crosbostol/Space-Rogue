@@ -50,12 +50,18 @@ func _ready() -> void:
 		var btn_iman = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/CheatIman")
 		var btn_inv = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/CheatInvulnerabilidad")
 		var btn_vig = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/ToggleVignette")
+		var btn_perf = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/CheatBalaPerforante")
+		var btn_exp = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/CheatBalaExpansiva")
 		
 		if btn_helice: btn_helice.pressed.connect(_on_cheat_helice_pressed)
 		if btn_coraza: btn_coraza.pressed.connect(_on_cheat_coraza_pressed)
 		if btn_iman: btn_iman.pressed.connect(_on_cheat_iman_pressed)
 		if btn_inv: btn_inv.pressed.connect(_on_cheat_invulnerabilidad_pressed)
 		if btn_vig: btn_vig.pressed.connect(_on_toggle_vignette_pressed)
+		if btn_perf: btn_perf.pressed.connect(_on_cheat_bala_perforante_pressed)
+		if btn_exp: btn_exp.pressed.connect(_on_cheat_bala_expansiva_pressed)
+		
+		_actualizar_texto_botones_bala()
 		print("Player: Conexiones de señales del DevMenu inicializadas síncronamente.")
 
 	# Inicializar la geometría procedimental de la nave
@@ -173,7 +179,7 @@ func recibir_dano(cantidad: float) -> void:
 	actualizar_vignette_dano_por_salud(true)
 	
 	# Disparar impacto dinámico y acumulativo en el parabrisas
-	var selector_grietas = get_node_or_null("/root/Main/UI/HUD/GrietasCabina")
+	var selector_grietas = get_node_or_null("/root/Main/World/GrietasCabina")
 	if selector_grietas and selector_grietas.has_method("registrar_impacto_vidrio"):
 		var porcentaje_salud: float = clamp(vida / vida_max, 0.0, 1.0)
 		var factor_dano: float = cantidad / vida_max
@@ -219,7 +225,7 @@ func hacer_invulnerable_temporal(duracion: float) -> void:
 ## Restablece los umbrales de fractura de cabina y limpia las grietas visuales (autoreparación de nanobots)
 func reparar_cabina_completa() -> void:
 	umbrales_cruzados = [false, false, false]
-	var grietas = get_node_or_null("/root/Main/UI/HUD/GrietasCabina")
+	var grietas = get_node_or_null("/root/Main/World/GrietasCabina")
 	if grietas and grietas.has_method("limpiar_grietas"):
 		grietas.limpiar_grietas()
 
@@ -373,3 +379,47 @@ func _on_toggle_vignette_pressed() -> void:
 				btn_vig.text = "Efecto Daño Rojo: Activo"
 			else:
 				btn_vig.text = "Efecto Daño Rojo: Inactivo"
+
+## Callback: Conmuta tipo de bala a Perforante o vuelve a Estándar si ya lo estaba
+func _on_cheat_bala_perforante_pressed() -> void:
+	var weapon_system = get_node_or_null("WeaponSystem")
+	if weapon_system and "tipo_bala_actual" in weapon_system:
+		if weapon_system.tipo_bala_actual == Enums.TipoBala.PERFORANTE:
+			weapon_system.tipo_bala_actual = Enums.TipoBala.ESTANDAR
+			print("Cheat Dev: Bala restablecida a ESTANDAR.")
+		else:
+			weapon_system.tipo_bala_actual = Enums.TipoBala.PERFORANTE
+			print("Cheat Dev: Bala cambiada a PERFORANTE.")
+		_actualizar_texto_botones_bala()
+
+## Callback: Conmuta tipo de bala a Expansiva o vuelve a Estándar si ya lo estaba
+func _on_cheat_bala_expansiva_pressed() -> void:
+	var weapon_system = get_node_or_null("WeaponSystem")
+	if weapon_system and "tipo_bala_actual" in weapon_system:
+		if weapon_system.tipo_bala_actual == Enums.TipoBala.EXPANSIVA:
+			weapon_system.tipo_bala_actual = Enums.TipoBala.ESTANDAR
+			print("Cheat Dev: Bala restablecida a ESTANDAR.")
+		else:
+			weapon_system.tipo_bala_actual = Enums.TipoBala.EXPANSIVA
+			print("Cheat Dev: Bala cambiada a EXPANSIVA.")
+		_actualizar_texto_botones_bala()
+
+## Auxiliar para actualizar visualmente los textos de los botones del menú de trucos
+func _actualizar_texto_botones_bala() -> void:
+	var dev_menu = get_node_or_null("/root/Main/UI/DevMenu")
+	var weapon_system = get_node_or_null("WeaponSystem")
+	if dev_menu and weapon_system:
+		var btn_perf = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/CheatBalaPerforante")
+		var btn_exp = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/CheatBalaExpansiva")
+		
+		if btn_perf:
+			if weapon_system.tipo_bala_actual == Enums.TipoBala.PERFORANTE:
+				btn_perf.text = "Bala Perforante: ACTIVA"
+			else:
+				btn_perf.text = "Activar Bala Perforante"
+				
+		if btn_exp:
+			if weapon_system.tipo_bala_actual == Enums.TipoBala.EXPANSIVA:
+				btn_exp.text = "Bala Expansiva: ACTIVA"
+			else:
+				btn_exp.text = "Activar Bala Expansiva"

@@ -15,3 +15,10 @@ enum TipoOrb {
 	GRANDE
 }
 
+## Catálogo de subtipos de munición para proyectiles polimórficos
+enum TipoBala {
+	ESTANDAR,
+	PERFORANTE,
+	EXPANSIVA
+}
+
