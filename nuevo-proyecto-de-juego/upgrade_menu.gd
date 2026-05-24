@@ -124,6 +124,10 @@ func _seleccionar_opcion(indice: int) -> void:
 					health_bar.max_value = player.vida_max
 					health_bar.value = player.vida
 					print("UpgradeMenu: HUD HealthBar actualizado. Max: ", health_bar.max_value, ", Valor: ", health_bar.value)
+					
+				# Sincronizar y limpiar la viñeta de tensión por curación total
+				if player.has_method("actualizar_vignette_dano_por_salud"):
+					player.actualizar_vignette_dano_por_salud(false)
 			"helice":
 				# Incrementar evolución procedimental de la nave y redibujar
 				player.nivel_evolucion_armas += 1

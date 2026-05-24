@@ -1,14 +1,24 @@
 [gd_scene format=3 uid="uid://cmyxmqdjcmwb3"]
 
 [ext_resource type="Script" uid="uid://dlu5i4h4ujixd" path="res://spawn_manager.gd" id="1_spawn"]
-[ext_resource type="Texture2D" uid="uid://c1tp7pqe622b5" path="res://icon.svg" id="2_icon"]
 [ext_resource type="Script" uid="uid://cn0euj383bu2p" path="res://run_manager.gd" id="3_run"]
 [ext_resource type="Script" uid="uid://dbhovndnca3v0" path="res://player.gd" id="4_player"]
 [ext_resource type="Script" uid="uid://byrobjisumi54" path="res://weapon_system.gd" id="5_weapon"]
 [ext_resource type="Script" uid="uid://drgs5hwbse3as" path="res://upgrade_menu.gd" id="6_upgrade"]
-[ext_resource type="Script" path="res://fondo_estelar.gd" id="7_stellar"]
+[ext_resource type="Script" uid="uid://b4mnct63l787d" path="res://fondo_estelar.gd" id="7_stellar"]
+[ext_resource type="Script" uid="uid://bidl0evhwe6ti" path="res://camera_shake.gd" id="8_shake"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_ig7tw"]
+
+[sub_resource type="Gradient" id="Gradient_vignette"]
+offsets = PackedFloat32Array(0.8, 1.0)
+colors = PackedColorArray(1, 0, 0, 0, 1, 0, 0, 0.6)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_vignette"]
+gradient = SubResource("Gradient_vignette")
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(0.5, 0.0)
 
 [node name="Main" type="Node" unique_id=348898223]
 
@@ -28,47 +38,44 @@ script = ExtResource("1_spawn")
 
 [node name="Background" type="Node2D" parent="World" unique_id=2050133358]
 
-[node name="FondoOscuro" type="ColorRect" parent="World/Background"]
+[node name="FondoOscuro" type="ColorRect" parent="World/Background" unique_id=1328971432]
 offset_left = -50000.0
 offset_top = -50000.0
 offset_right = 50000.0
 offset_bottom = 50000.0
 color = Color(0.02, 0.02, 0.04, 1)
 
-[node name="CapaLejana" type="Parallax2D" parent="World/Background"]
+[node name="CapaLejana" type="Parallax2D" parent="World/Background" unique_id=1828822321]
 scroll_scale = Vector2(0.1, 0.1)
 repeat_size = Vector2(1920, 1080)
 repeat_times = 3
 
-[node name="FondoEstelarLejana" type="Node2D" parent="World/Background/CapaLejana"]
+[node name="FondoEstelarLejana" type="Node2D" parent="World/Background/CapaLejana" unique_id=565983065]
 script = ExtResource("7_stellar")
 cantidad_estrellas = 150
 tamano_max_estrella = 1.0
-color_base = Color(0.7, 0.9, 1.0, 1.0)
+color_base = Color(0.7, 0.9, 1, 1)
 velocidad_parpadeo = 1.2
 
-[node name="CapaMedia" type="Parallax2D" parent="World/Background"]
+[node name="CapaMedia" type="Parallax2D" parent="World/Background" unique_id=177929572]
 scroll_scale = Vector2(0.3, 0.3)
 repeat_size = Vector2(1920, 1080)
 repeat_times = 3
 
-[node name="FondoEstelarMedia" type="Node2D" parent="World/Background/CapaMedia"]
+[node name="FondoEstelarMedia" type="Node2D" parent="World/Background/CapaMedia" unique_id=123482268]
 script = ExtResource("7_stellar")
 cantidad_estrellas = 80
-tamano_max_estrella = 1.5
-color_base = Color(1.0, 1.0, 1.0, 1.0)
-velocidad_parpadeo = 2.0
 
-[node name="CapaCercana" type="Parallax2D" parent="World/Background"]
+[node name="CapaCercana" type="Parallax2D" parent="World/Background" unique_id=2144236777]
 scroll_scale = Vector2(0.6, 0.6)
 repeat_size = Vector2(1920, 1080)
 repeat_times = 3
 
-[node name="FondoEstelarCercana" type="Node2D" parent="World/Background/CapaCercana"]
+[node name="FondoEstelarCercana" type="Node2D" parent="World/Background/CapaCercana" unique_id=2117505747]
 script = ExtResource("7_stellar")
 cantidad_estrellas = 40
 tamano_max_estrella = 2.0
-color_base = Color(0.0, 1.0, 1.0, 1.0)
+color_base = Color(0, 1, 1, 1)
 velocidad_parpadeo = 3.5
 
 [node name="Player" type="CharacterBody2D" parent="World" unique_id=1353015756]
@@ -90,6 +97,7 @@ shape = SubResource("CircleShape2D_ig7tw")
 script = ExtResource("5_weapon")
 
 [node name="Camera2D" type="Camera2D" parent="World/Player" unique_id=999999999]
+script = ExtResource("8_shake")
 
 [node name="EnemiesContainer" type="Node2D" parent="World" unique_id=1912032595]
 
@@ -104,6 +112,18 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="VignetteDano" type="TextureRect" parent="UI/HUD" unique_id=123456789]
+modulate = Color(1, 1, 1, 0)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_vignette")
+expand_mode = 1
 
 [node name="HealthBar" type="ProgressBar" parent="UI/HUD" unique_id=-961633963]
 layout_mode = 0
@@ -327,6 +347,10 @@ text = "Cheat Imán"
 [node name="CheatInvulnerabilidad" type="Button" parent="UI/DevMenu/Panel/MarginContainer/VBoxContainer" unique_id=98989906]
 layout_mode = 2
 text = "Cheat Invulnerabilidad: Inactivo"
+
+[node name="ToggleVignette" type="Button" parent="UI/DevMenu/Panel/MarginContainer/VBoxContainer" unique_id=98989907]
+layout_mode = 2
+text = "Efecto Daño Rojo: Activo"
 
 [connection signal="pressed" from="UI/UpgradeMenu/MarginContainer/VBoxContainer/CardsContainer/CardButton1" to="UI/UpgradeMenu" method="_on_card_button_1_pressed"]
 [connection signal="pressed" from="UI/UpgradeMenu/MarginContainer/VBoxContainer/CardsContainer/CardButton2" to="UI/UpgradeMenu" method="_on_card_button_2_pressed"]

@@ -97,6 +97,20 @@ func recibir_dano(cantidad: float) -> void:
 	if vida <= 0.0:
 		return
 		
+	# 1. Feedback visual: Hit Flash (glow de sobreexposición blanca a Color(5, 5, 5))
+	var visual = get_node_or_null("Visual")
+	if visual:
+		var original_modulate = visual.modulate
+		visual.modulate = Color(5.0, 5.0, 5.0)
+		# Usar Tween para restaurar modulate de forma segura (se limpia automáticamente si el enemigo muere)
+		var flash_tween = create_tween()
+		flash_tween.tween_property(visual, "modulate", original_modulate, 0.0).set_delay(0.05)
+		
+	# 2. Inyectar trauma leve a la cámara tras el impacto
+	var camera = get_node_or_null("/root/Main/World/Player/Camera2D")
+	if camera and camera.has_method("agregar_trauma"):
+		camera.agregar_trauma(0.1)
+
 	var dmg_label = DAMAGE_NUMBER_SCENE.instantiate()
 	dmg_label.dano_mostrar = cantidad
 	dmg_label.global_position = global_position
@@ -115,7 +129,6 @@ func recibir_dano(cantidad: float) -> void:
 		
 		var explosion = EXPLOSION_PARTICLES_SCENE.instantiate()
 		explosion.global_position = global_position
-		var visual = get_node_or_null("Visual")
 		if visual and visual is Line2D:
 			explosion.color = visual.default_color
 			explosion.modulate = visual.default_color
@@ -131,6 +144,9 @@ func recibir_dano(cantidad: float) -> void:
 				if Engine.time_scale == 0.01:
 					Engine.time_scale = 1.0
 			)
+			# Trauma masivo por la explosión del Tanque blindado
+			if camera and camera.has_method("agregar_trauma"):
+				camera.agregar_trauma(0.5)
 		
 		set_deferred("monitoring", false)
 		set_deferred("monitorable", false)

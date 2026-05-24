@@ -15,6 +15,9 @@ var es_invulnerable: bool = false
 ## Indica si el jugador es invulnerable de forma temporal tras elegir una mejora
 var es_invulnerable_temporal: bool = false
 
+## Determina si el efecto de borde rojo por daño (Vignette) está habilitado en los ajustes
+var usar_vignette_dano: bool = true
+
 func _ready() -> void:
 	# Conectar dinámicamente la señal area_entered de la Hitbox
 	var hitbox = get_node_or_null("Hitbox")
@@ -40,15 +43,20 @@ func _ready() -> void:
 		var btn_coraza = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/CheatCoraza")
 		var btn_iman = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/CheatIman")
 		var btn_inv = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/CheatInvulnerabilidad")
+		var btn_vig = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/ToggleVignette")
 		
 		if btn_helice: btn_helice.pressed.connect(_on_cheat_helice_pressed)
 		if btn_coraza: btn_coraza.pressed.connect(_on_cheat_coraza_pressed)
 		if btn_iman: btn_iman.pressed.connect(_on_cheat_iman_pressed)
 		if btn_inv: btn_inv.pressed.connect(_on_cheat_invulnerabilidad_pressed)
+		if btn_vig: btn_vig.pressed.connect(_on_toggle_vignette_pressed)
 		print("Player: Conexiones de señales del DevMenu inicializadas síncronamente.")
 
 	# Inicializar la geometría procedimental de la nave
 	actualizar_geometria_nave()
+	
+	# Inicializar la viñeta de daño al 100% de salud de forma transparente
+	actualizar_vignette_dano_por_salud(false)
 
 func _physics_process(_delta: float) -> void:
 	# 1. Capturar el input del jugador en 360° (Teclado WASD o Stick Izquierdo)
@@ -127,6 +135,9 @@ func recibir_dano(cantidad: float) -> void:
 	vida = max(0.0, vida - cantidad)
 	print("¡Player recibió daño! Vida restante: ", vida)
 	
+	# Animación y recalculo de Tensión Dinámica del Red Splash / Vignette
+	actualizar_vignette_dano_por_salud(true)
+	
 	# Actualizar el ProgressBar del HUD
 	var health_bar = get_node_or_null("/root/Main/UI/HUD/HealthBar")
 	if health_bar and health_bar is ProgressBar:
@@ -156,12 +167,46 @@ func hacer_invulnerable_temporal(duracion: float) -> void:
 	if visual:
 		visual.modulate.a = 0.4
 		
-	get_tree().create_timer(duracion, true, false, true).timeout.connect(func():
-		es_invulnerable_temporal = false
-		if visual:
-			visual.modulate.a = 1.0
-		print("Player: Invulnerabilidad temporal finalizada.")
-	)
+		# Usar Tween para restaurar modulate de forma segura (se limpia automáticamente si el jugador es liberado)
+		var inv_tween = create_tween()
+		inv_tween.tween_property(visual, "modulate:a", 1.0, 0.0).set_delay(duracion)
+		inv_tween.tween_callback(func():
+			es_invulnerable_temporal = false
+			print("Player: Invulnerabilidad temporal finalizada.")
+		)
+
+## Recalcula el offset y la opacidad de la viñeta de daño en base a la salud actual del jugador (Tensión Dinámica)
+func actualizar_vignette_dano_por_salud(es_impacto: bool = false) -> void:
+	if not usar_vignette_dano:
+		return
+		
+	var vignette = get_node_or_null("/root/Main/UI/HUD/VignetteDano")
+	if vignette and vignette.texture and vignette.texture is GradientTexture2D:
+		var g_texture = vignette.texture as GradientTexture2D
+		var gradient = g_texture.gradient
+		if gradient:
+			# 1. Calcular el porcentaje de salud actual (rango 0.0 a 1.0)
+			var porcentaje_salud: float = clamp(vida / vida_max, 0.0, 1.0)
+			var factor_tension: float = 1.0 - porcentaje_salud # 0.0 a tope de vida, 1.0 al borde de morir
+			
+			# 2. Modificar el offset del gradiente de forma inversamente proporcional:
+			# A tope de vida, el offset inicial es 0.95 (borde ultra sutil).
+			# Cerca de morir, el offset baja a 0.65, haciendo que el rojo muerda agresivamente hacia el centro.
+			var nuevo_offset_inicio: float = lerp(0.95, 0.65, factor_tension)
+			gradient.set_offset(0, nuevo_offset_inicio)
+			
+			# 3. Disparar un latido (Flash) elástico usando Tweens:
+			var opacidad_objetivo_tension: float = lerp(0.0, 0.4, factor_tension)
+			
+			if es_impacto:
+				var opacidad_impacto: float = clamp(opacidad_objetivo_tension + 0.4, 0.3, 0.8)
+				var tween = create_tween()
+				vignette.modulate.a = opacidad_impacto # Pico del flash en el frame del golpe
+				tween.tween_property(vignette, "modulate:a", opacidad_objetivo_tension, 0.2).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			else:
+				# Actualización suave sin pico de impacto (para curación o carga inicial)
+				var tween = create_tween()
+				tween.tween_property(vignette, "modulate:a", opacidad_objetivo_tension, 0.25).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 ## Recibe experiencia de los orbes recolectados.
 func recibir_xp(cantidad: int) -> void:
@@ -241,6 +286,9 @@ func _on_cheat_coraza_pressed() -> void:
 	if health_bar and health_bar is ProgressBar:
 		health_bar.max_value = vida_max
 		health_bar.value = vida
+		
+	# Sincronizar y limpiar la viñeta de tensión
+	actualizar_vignette_dano_por_salud(false)
 
 ## Callback: Incrementa el rango de atracción del imán en 40px
 func _on_cheat_iman_pressed() -> void:
@@ -260,3 +308,17 @@ func _on_cheat_invulnerabilidad_pressed() -> void:
 				btn_inv.text = "Cheat Invulnerabilidad: Activo"
 			else:
 				btn_inv.text = "Cheat Invulnerabilidad: Inactivo"
+
+## Callback: Alterna el efecto de borde rojo por daño (Vignette)
+func _on_toggle_vignette_pressed() -> void:
+	usar_vignette_dano = not usar_vignette_dano
+	print("Settings Dev: Usar Vignette Daño conmutado: ", usar_vignette_dano)
+	
+	var dev_menu = get_node_or_null("/root/Main/UI/DevMenu")
+	if dev_menu:
+		var btn_vig = dev_menu.get_node_or_null("Panel/MarginContainer/VBoxContainer/ToggleVignette")
+		if btn_vig:
+			if usar_vignette_dano:
+				btn_vig.text = "Efecto Daño Rojo: Activo"
+			else:
+				btn_vig.text = "Efecto Daño Rojo: Inactivo"
